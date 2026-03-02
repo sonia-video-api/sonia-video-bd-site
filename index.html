@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sonia Video BD - Crée tes Vidéos & Bandes Dessinées</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;600;700;800;900&family=Oswald:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===== HERO SECTION ===== -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="particles" id="particles"></div>
+    <div class="hero-content">
+      <div class="hero-title-wrap">
+        <div class="film-reel left">🎞️</div>
+        <div class="title-block">
+          <span class="title-sonia">SONIA</span>
+          <span class="title-video">Video <span class="title-bd">BD</span></span>
+          <span class="yt-icon">▶</span>
+        </div>
+        <div class="film-reel right">🎞️</div>
+      </div>
+      <p class="hero-sub">CRÉE TES <span class="highlight-yellow">VIDÉOS &amp; BANDES DESSINÉES</span></p>
+      <p class="hero-cta-text">EN QUELQUES CLICS !</p>
+
+      <!-- 3 étapes -->
+      <div class="steps-row">
+        <!-- Étape gauche : Upload -->
+        <div class="step-upload">
+          <div class="phone-mockup">
+            <div class="phone-screen">
+              <div class="upload-label">UPLOAD</div>
+              <div class="phone-img">👨‍👩‍👦</div>
+            </div>
+          </div>
+          <div class="upload-badge">📥 TÉLÉCHARGE<br/>UNE PHOTO</div>
+          <div class="arrow-down">⬇</div>
+        </div>
+
+        <!-- BD centrale -->
+        <div class="step-bd">
+          <div class="bd-grid">
+            <div class="bd-panel p1">🎨</div>
+            <div class="bd-panel p2">🏃</div>
+            <div class="bd-panel p3">💃</div>
+            <div class="bd-panel p4">🌟</div>
+          </div>
+        </div>
+
+        <!-- Étape droite : Voix off + Vidéo HD -->
+        <div class="step-video">
+          <div class="voix-off-badge">🎙️ VOIX OFF</div>
+          <div class="video-preview">▶</div>
+          <div class="video-hd-badge">🎬 VIDÉO HD ▶ 🎵</div>
+        </div>
+      </div>
+
+      <!-- Numéros étapes -->
+      <div class="steps-numbers">
+        <div class="step-num">
+          <div class="step-circle blue">①</div>
+          <span>TÉLÉCHARGE</span>
+          <div class="step-thumb">📸</div>
+        </div>
+        <div class="step-arrow">➡</div>
+        <div class="step-num">
+          <div class="step-circle orange">②</div>
+          <span>TRANSFORME EN BD</span>
+          <div class="step-thumb bd-thumb">🖼️</div>
+        </div>
+        <div class="step-arrow">➡</div>
+        <div class="step-num">
+          <div class="step-circle green">③</div>
+          <span>CRÉE LA VIDÉO</span>
+          <div class="step-thumb">🎬</div>
+        </div>
+      </div>
+
+      <!-- Features -->
+      <div class="features-row">
+        <div class="feature-item">🎙️ <strong>+ VOIX OFF</strong></div>
+        <div class="feature-item">📝 <strong>+ SOUS-TITRES</strong> <span class="cc">CC</span></div>
+        <div class="feature-item">🎵 <strong>MUSIQUE</strong></div>
+        <div class="feature-item">✨ <strong>+ EFFETS</strong></div>
+      </div>
+
+      <!-- Bouton principal -->
+      <button class="btn-create" onclick="scrollToCreate()">🎬 CRÉER MA VIDÉO</button>
+
+      <!-- Badges bas -->
+      <div class="badges-row">
+        <a href="#" class="badge-dl">📥 Télécharge</a>
+        <span class="badge-quality">HD</span>
+        <span class="badge-quality">4K</span>
+        <span class="badge-social yt">▶</span>
+        <span class="badge-social tk">♪</span>
+        <span class="badge-social ig">📷</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CRÉER MA VIDÉO EN 1 PHRASE ===== -->
+  <section class="create-section" id="create">
+    <div class="create-bg"></div>
+    <div class="create-content">
+      <h2 class="create-title">Crée ta <span class="highlight-white">BD vidéo</span> en <span class="highlight-red">1 phrase</span></h2>
+      <div class="create-form-wrap">
+        <div class="create-form">
+          <input type="text" class="create-input" placeholder="Décris ta vidéo...  (ex: BD romantique avec voix off dramatique)" />
+          <div class="create-image-add">
+            <span class="camera-icon">📷</span>
+            <strong>Ajouter une image</strong> <span class="optional">(optionnel)</span>
+            <input type="file" accept="image/*" style="display:none" id="imgUpload" />
+          </div>
+        </div>
+        <button class="btn-create-video" onclick="alert('Fonctionnalité bientôt disponible !')">CRÉER MA VIDÉO</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== NOS TARIFS ===== -->
+  <section class="tarifs-section" id="tarifs">
+    <div class="tarifs-bg"></div>
+    <div class="tarifs-content">
+      <div class="section-header">
+        <span class="section-icon">🎬</span>
+        <h2 class="section-title">Nos <strong>Tarifs</strong></h2>
+      </div>
+      <p class="section-sub">🎬 <em>Choisis</em> ta qualité</p>
+
+      <div class="tarifs-grid">
+        <!-- Standard -->
+        <div class="tarif-card standard">
+          <h3 class="tarif-name">Standard</h3>
+          <p class="tarif-from">À partir de</p>
+          <p class="tarif-price">0,91 €</p>
+          <ul class="tarif-features">
+            <li>✅ 30 sec → 0,91 €</li>
+            <li>✅ 60 sec → 1,61 €</li>
+            <li>✅ Format vertical</li>
+            <li>✅ Voix off Incluse</li>
+            <li>✅ Sous-titres automatiques</li>
+            <li>✅ Idéal TikTok</li>
+          </ul>
+          <button class="btn-tarif standard-btn" onclick="scrollToCreate()">Choisir Standard</button>
+          <div class="tarif-meta">
+            <div class="meta-row"><span>Résolution</span><span class="meta-val">576×1024</span></div>
+            <div class="meta-row"><span>✅ Voix off</span><span class="meta-val">✅</span></div>
+            <div class="meta-row"><span>✅ Vitesse</span><span class="meta-val">✅ Rapide</span></div>
+          </div>
+        </div>
+
+        <!-- HD -->
+        <div class="tarif-card hd popular">
+          <div class="popular-badge">⭐ Meilleur choix</div>
+          <h3 class="tarif-name">HD <span class="hd-sub">– Meilleur choix</span></h3>
+          <p class="tarif-from">À partir de</p>
+          <p class="tarif-price gold">1,61 €</p>
+          <ul class="tarif-features">
+            <li>✅ Qualité 1080×1920</li>
+            <li>✅ 30 sec → 1,61 €</li>
+            <li>✅ 60 sec → 2,41 €</li>
+            <li>✅ Image plus nette</li>
+            <li>✅ Idéal Reels / YouTube Shorts</li>
+            <li>✅ Voix off premium</li>
+          </ul>
+          <button class="btn-tarif hd-btn" onclick="scrollToCreate()">Choisir HD</button>
+          <div class="tarif-meta">
+            <div class="meta-row"><span>Standard</span><span class="meta-val gold-text">1080×1920</span></div>
+            <div class="meta-row"><span>✅ Voix off</span><span class="meta-val gold-text">✅ Premium</span></div>
+            <div class="meta-row"><span>✅ Qualité image</span><span class="meta-val gold-text">✅ Excellente</span></div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-acheter-credits" onclick="scrollToPacks()">🛒 Acheter des crédits</button>
+    </div>
+  </section>
+
+  <!-- ===== NOS PACKS DE CRÉDITS ===== -->
+  <section class="packs-section" id="packs">
+    <div class="packs-bg"></div>
+    <div class="packs-content">
+      <div class="section-header">
+        <span class="section-icon">🎬</span>
+        <h2 class="section-title">Nos <strong>Packs</strong> de crédits</h2>
+      </div>
+
+      <div class="packs-grid">
+        <!-- Pack Mini -->
+        <div class="pack-card mini">
+          <h3 class="pack-name">Pack Mini</h3>
+          <p class="pack-from">À partir de</p>
+          <p class="pack-price">3,50 €</p>
+          <p class="pack-credits">120 crédits</p>
+          <ul class="pack-features">
+            <li>✅ 12 vidéos 30 sec</li>
+            <li>✅ 8 vidéos 60 sec</li>
+          </ul>
+          <button class="btn-pack mini-btn" onclick="alert('Paiement bientôt disponible !')">🛒 Acheter</button>
+          <div class="pack-meta">
+            <p>120 crédits</p>
+            <p>12 vidéos 30 sec ou 8 vidéos 60 sec</p>
+          </div>
+        </div>
+
+        <!-- Pack Starter -->
+        <div class="pack-card starter">
+          <h3 class="pack-name">Pack Starter</h3>
+          <p class="pack-from">À partir de</p>
+          <p class="pack-price">6,99 €</p>
+          <p class="pack-credits">250 crédits</p>
+          <ul class="pack-features">
+            <li>✅ 25 vidéos 30 sec</li>
+            <li>✅ 16 vidéos 60 sec</li>
+          </ul>
+          <button class="btn-pack starter-btn" onclick="alert('Paiement bientôt disponible !')">🛒 Acheter</button>
+          <div class="pack-meta">
+            <p>250 crédits</p>
+            <p>25 vidéos 30 sec ou 16 vidéos 60 sec</p>
+          </div>
+        </div>
+
+        <!-- Pack Populaire -->
+        <div class="pack-card populaire">
+          <div class="popular-badge gold">⭐ Meilleure valeur</div>
+          <h3 class="pack-name">Pack Populaire</h3>
+          <p class="pack-sub-badge">Meilleure valeur</p>
+          <p class="pack-price gold-price">8,99 €</p>
+          <p class="pack-credits">400 crédits</p>
+          <ul class="pack-features">
+            <li>✅ 40 vidéos 30 sec</li>
+            <li>✅ 16 vidéos 60 sec</li>
+          </ul>
+          <button class="btn-pack populaire-btn" onclick="alert('Paiement bientôt disponible !')">🛒 Acheter</button>
+          <div class="pack-meta">
+            <p>400 crédits</p>
+            <p>40 vidéos 30 sec</p>
+          </div>
+        </div>
+
+        <!-- Pack Pro -->
+        <div class="pack-card pro">
+          <div class="pro-diamond">💎</div>
+          <h3 class="pack-name">Pack Pro</h3>
+          <p class="pack-from">À partir de</p>
+          <p class="pack-price">20,00 €</p>
+          <p class="pack-credits">800 crédits</p>
+          <ul class="pack-features">
+            <li>✅ 80 vidéos 30 sec</li>
+          </ul>
+          <button class="btn-pack pro-btn" onclick="alert('Paiement bientôt disponible !')">🛒 Acheter</button>
+          <div class="pack-meta">
+            <p>800 crédits</p>
+            <p>80 vidéos 30 sec</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="footer-content">
+      <p class="footer-brand">🎬 <strong>Sonia Video BD</strong></p>
+      <p class="footer-tagline">Transforme tes photos en vidéos BD extraordinaires</p>
+      <div class="footer-socials">
+        <a href="#" class="social-link yt">▶ YouTube</a>
+        <a href="#" class="social-link tk">♪ TikTok</a>
+        <a href="#" class="social-link ig">📷 Instagram</a>
+      </div>
+      <p class="footer-copy">© 2026 Sonia Video BD. Tous droits réservés.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
