@@ -910,6 +910,21 @@ body {
 
 .btn-pack:hover { transform: scale(1.02); filter: brightness(1.1); }
 
+.pack-calcul {
+  background: rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 10px 0;
+  font-size: 0.82rem;
+  color: #ffd700;
+  text-align: left;
+  line-height: 1.7;
+}
+.pack-calcul strong {
+  color: #fff;
+  font-weight: 700;
+}
+
 .pack-meta {
   background: rgba(0,0,0,0.3);
   border-radius: 8px;
