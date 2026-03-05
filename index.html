@@ -148,6 +148,74 @@
     </div>
   </section>
 
+  <!-- ===== VOIX OFF ===== -->
+  <section class="voix-section" id="voix" style="padding:60px 20px; background:linear-gradient(180deg,#0a0a1a 0%,#0d0d2b 100%); text-align:center;">
+    <div style="max-width:900px; margin:0 auto;">
+      <div style="margin-bottom:30px;">
+        <span style="font-size:2.5rem;">🎙️</span>
+        <h2 style="color:#fff; font-size:2rem; font-weight:800; margin:10px 0 6px;">Voix Off <span style="color:#ffd700;">Gratuites</span></h2>
+        <p style="color:#aaa; font-size:1rem;">20 voix naturelles — Hommes &amp; Femmes — Aucun robot !</p>
+      </div>
+
+      <!-- Texte à lire -->
+      <div style="margin-bottom:20px;">
+        <textarea id="voixTexte" placeholder="Écris le texte à lire en voix off..." style="width:100%; max-width:700px; height:100px; padding:14px; border-radius:12px; border:2px solid #333; background:#111; color:#fff; font-size:1rem; resize:vertical;"></textarea>
+      </div>
+
+      <!-- Sélecteur de voix -->
+      <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:24px;" id="voixGrid">
+        <!-- Voix FEMMES -->
+        <div style="width:100%; text-align:left; padding:0 10px; margin-bottom:4px;"><span style="color:#ff69b4; font-weight:700; font-size:0.9rem;">👩 FEMMES</span></div>
+        <button class="voix-btn" onclick="selVoix(this,'fr-FR','Amélie','f')" style="background:#1a0a2e; border:2px solid #ff69b4; color:#ff69b4; padding:8px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all 0.2s;">👩 Amélie</button>
+        <button class="voix-btn" onclick="selVoix(this,'fr-FR','Sophie','f')" style="background:#1a0a2e; border:2px solid #ff69b4; color:#ff69b4; padding:8px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all 0.2s;">👩 Sophie</button>
+        <button class="voix-btn" onclick="selVoix(this,'fr-FR','Marie','f')" style="background:#1a0a2e; border:2px solid #ff69b4; color:#ff69b4; padding:8px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all 0.2s;">👩 Marie</button>
+        <button class="voix-btn" onclick="selVoix(this,'fr-FR','Claire','f')" style="background:#1a0a2e; border:2px solid #ff69b4; color:#ff69b4; padding:8px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all 0.2s;">👩 Claire</button>
+        <button class="voix-btn" onclick="selVoix(this,'fr-FR','Isabelle','f')" style="background:#1a0a2e; border:2px solid #ff69b4; color:#ff69b4; padding:8px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all 0.2s;">👩 Isabelle</button>
+        <button class="voix-btn" onclick="selVoix(this,'fr-FR','Lucie','f')" style="background:#1a0a2e; border:2px solid #ff69b4; color:#ff69b4; padding:8px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all 0.2s;">👩 Lucie</button>
+        <button class="voix-btn" onclick="selVoix(this,'fr-FR','Emma','f')" style="background:#1a0a2e; border:2px solid #ff69b4; color:#ff69b4; padding:8px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all 0.2s;">👩 Emma</button>
+        <button class="voix-btn" onclick="selVoix(this,'fr-FR','Chloé','f')" style="background:#1a0a2e; border:2px solid #ff69b4; color:#ff69b4; padding:8px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all 0.2s;">👩 Chloé</button>
+        <button class="voix-btn" onclick="selVoix(this,'fr-FR','Léa','f')" style="background:#1a0a2e; border:2px solid #ff69b4; color:#ff69b4; padding:8px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all 0.2s;">👩 Léa</button>
+        <button class="voix-btn" onclick="selVoix(this,'fr-FR','Nathalie','f')" style="background:#1a0a2e; border:2px solid #ff69b4; color:#ff69b4; padding:8px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all 0.2s;">👩 Nathalie</button>
+
+        <!-- Voix HOMMES -->
+        <div style="width:100%; text-align:left; padding:0 10px; margin:10px 0 4px;"><span style="color:#4a90d9; font-weight:700; font-size:0.9rem;">👨 HOMMES</span></div>
+        <button class="voix-btn" onclick="selVoix(this,'fr-FR','Pierre','m')" style="background:#0a1a2e; border:2px solid #4a90d9; color:#4a90d9; padding:8px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all 0.2s;">👨 Pierre</button>
+        <button class="voix-btn" onclick="selVoix(this,'fr-FR','Thomas','m')" style="background:#0a1a2e; border:2px solid #4a90d9; color:#4a90d9; padding:8px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all 0.2s;">👨 Thomas</button>
+        <button class="voix-btn" onclick="selVoix(this,'fr-FR','Nicolas','m')" style="background:#0a1a2e; border:2px solid #4a90d9; color:#4a90d9; padding:8px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all 0.2s;">👨 Nicolas</button>
+        <button class="voix-btn" onclick="selVoix(this,'fr-FR','Antoine','m')" style="background:#0a1a2e; border:2px solid #4a90d9; color:#4a90d9; padding:8px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all 0.2s;">👨 Antoine</button>
+        <button class="voix-btn" onclick="selVoix(this,'fr-FR','Julien','m')" style="background:#0a1a2e; border:2px solid #4a90d9; color:#4a90d9; padding:8px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all 0.2s;">👨 Julien</button>
+        <button class="voix-btn" onclick="selVoix(this,'fr-FR','Marc','m')" style="background:#0a1a2e; border:2px solid #4a90d9; color:#4a90d9; padding:8px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all 0.2s;">👨 Marc</button>
+        <button class="voix-btn" onclick="selVoix(this,'fr-FR','Luc','m')" style="background:#0a1a2e; border:2px solid #4a90d9; color:#4a90d9; padding:8px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all 0.2s;">👨 Luc</button>
+        <button class="voix-btn" onclick="selVoix(this,'fr-FR','David','m')" style="background:#0a1a2e; border:2px solid #4a90d9; color:#4a90d9; padding:8px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all 0.2s;">👨 David</button>
+        <button class="voix-btn" onclick="selVoix(this,'fr-FR','François','m')" style="background:#0a1a2e; border:2px solid #4a90d9; color:#4a90d9; padding:8px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all 0.2s;">👨 François</button>
+        <button class="voix-btn" onclick="selVoix(this,'fr-FR','Maxime','m')" style="background:#0a1a2e; border:2px solid #4a90d9; color:#4a90d9; padding:8px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem; transition:all 0.2s;">👨 Maxime</button>
+      </div>
+
+      <!-- Contrôles vitesse/ton -->
+      <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap; margin-bottom:20px;">
+        <div style="text-align:center;">
+          <label style="color:#aaa; font-size:0.85rem;">Vitesse</label><br/>
+          <input type="range" id="voixVitesse" min="0.5" max="2" step="0.1" value="1" style="width:120px; accent-color:#ffd700;" oninput="document.getElementById('vitesseVal').textContent=this.value+'x'" />
+          <span id="vitesseVal" style="color:#ffd700; font-size:0.85rem; margin-left:6px;">1x</span>
+        </div>
+        <div style="text-align:center;">
+          <label style="color:#aaa; font-size:0.85rem;">Ton (grave/aigu)</label><br/>
+          <input type="range" id="voixTon" min="0.5" max="2" step="0.1" value="1" style="width:120px; accent-color:#ff69b4;" oninput="document.getElementById('tonVal').textContent=this.value" />
+          <span id="tonVal" style="color:#ff69b4; font-size:0.85rem; margin-left:6px;">1</span>
+        </div>
+      </div>
+
+      <!-- Boutons action -->
+      <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+        <button onclick="jouerVoix()" style="background:linear-gradient(135deg,#e63946,#c1121f); color:#fff; border:none; padding:14px 32px; border-radius:30px; font-size:1rem; font-weight:700; cursor:pointer; box-shadow:0 4px 15px rgba(230,57,70,0.4);">▶ ÉCOUTER</button>
+        <button onclick="stopVoix()" style="background:#333; color:#fff; border:none; padding:14px 24px; border-radius:30px; font-size:1rem; cursor:pointer;">⏹ STOP</button>
+      </div>
+
+      <!-- Voix sélectionnée -->
+      <p id="voixSelectee" style="color:#ffd700; margin-top:16px; font-size:0.9rem;">Aucune voix sélectionnée — cliquez sur un nom ci-dessus</p>
+    </div>
+  </section>
+
   <!-- ===== NOS TARIFS ===== -->
   <section class="tarifs-section" id="tarifs">
     <div class="tarifs-bg"></div>
@@ -471,6 +539,87 @@
       btnCreer.textContent = 'CRÉER MA VIDÉO';
     }
   }
+
+  // ===== VOIX OFF - Web Speech API =====
+  let voixSelectionnee = null;
+  let utterance = null;
+
+  // Correspondance voix : genre + index
+  const voixConfig = {
+    'f': { pitch: 1.2, gender: 'female' },
+    'm': { pitch: 0.8, gender: 'male' }
+  };
+
+  // Index pour varier les voix du même genre
+  const voixIndex = { 'Amélie':0,'Sophie':1,'Marie':2,'Claire':3,'Isabelle':4,'Lucie':5,'Emma':6,'Chloé':7,'Léa':8,'Nathalie':9,'Pierre':0,'Thomas':1,'Nicolas':2,'Antoine':3,'Julien':4,'Marc':5,'Luc':6,'David':7,'François':8,'Maxime':9 };
+
+  function selVoix(btn, lang, nom, genre) {
+    // Reset tous les boutons
+    document.querySelectorAll('.voix-btn').forEach(b => {
+      b.style.opacity = '0.7';
+      b.style.transform = 'scale(1)';
+    });
+    // Activer le bouton sélectionné
+    btn.style.opacity = '1';
+    btn.style.transform = 'scale(1.08)';
+    btn.style.boxShadow = genre === 'f' ? '0 0 12px rgba(255,105,180,0.6)' : '0 0 12px rgba(74,144,217,0.6)';
+
+    voixSelectionnee = { lang, nom, genre };
+    document.getElementById('voixSelectee').textContent = '✅ Voix sélectionnée : ' + (genre === 'f' ? '👩' : '👨') + ' ' + nom;
+  }
+
+  function jouerVoix() {
+    const texte = document.getElementById('voixTexte').value.trim();
+    if (!texte) {
+      alert('Veuillez écrire un texte à lire !');
+      return;
+    }
+    if (!voixSelectionnee) {
+      alert('Veuillez sélectionner une voix !');
+      return;
+    }
+
+    // Arrêter si en cours
+    window.speechSynthesis.cancel();
+
+    utterance = new SpeechSynthesisUtterance(texte);
+    utterance.lang = voixSelectionnee.lang;
+    utterance.rate = parseFloat(document.getElementById('voixVitesse').value);
+    utterance.pitch = parseFloat(document.getElementById('voixTon').value);
+
+    // Choisir la meilleure voix disponible
+    const voices = window.speechSynthesis.getVoices();
+    const frVoices = voices.filter(v => v.lang.startsWith('fr'));
+    const genreVoices = frVoices.filter(v => {
+      const n = v.name.toLowerCase();
+      if (voixSelectionnee.genre === 'f') return n.includes('female') || n.includes('femme') || n.includes('amelie') || n.includes('marie') || n.includes('thomas') === false;
+      return n.includes('male') || n.includes('homme') || n.includes('thomas') || n.includes('pierre');
+    });
+
+    const idx = voixIndex[voixSelectionnee.nom] || 0;
+    const pool = genreVoices.length > 0 ? genreVoices : frVoices;
+    if (pool.length > 0) {
+      utterance.voice = pool[idx % pool.length];
+    }
+
+    // Ajuster le pitch selon le genre
+    if (voixSelectionnee.genre === 'f') {
+      utterance.pitch = Math.max(utterance.pitch, 1.1);
+    } else {
+      utterance.pitch = Math.min(utterance.pitch, 0.9);
+    }
+
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function stopVoix() {
+    window.speechSynthesis.cancel();
+  }
+
+  // Charger les voix au démarrage
+  window.speechSynthesis.onvoiceschanged = function() {
+    window.speechSynthesis.getVoices();
+  };
   </script>
 </body>
 </html>
