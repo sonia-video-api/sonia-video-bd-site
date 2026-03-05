@@ -502,7 +502,7 @@
   async function genererBD() {
     const prompt = document.getElementById('videoPrompt').value.trim();
     if (!prompt) {
-      alert('Veuillez décrire votre histoire BD !');
+      alert('Veuillez décrire votre idée de BD !');
       return;
     }
 
@@ -515,7 +515,7 @@
     const bdPages = document.getElementById('bdPages');
 
     btnCreer.disabled = true;
-    btnCreer.textContent = '⏳ Génération...';
+    btnCreer.textContent = '⏳ Création...';
     bdResult.style.display = 'block';
     bdLoading.style.display = 'block';
     bdImages.style.display = 'none';
@@ -524,33 +524,48 @@
     bdPages.innerHTML = '';
     bdGeneratedUrls = [];
 
-    // Prompts pour couverture + 4 pages
-    const titreHistoire = prompt;
-    const prompts = [
-      // Couverture
-      `Comic book cover, colorful BD style illustration, title "${titreHistoire}", vibrant colors, dynamic characters, professional comic art, high quality`,
-      // Page 1
-      `Comic book page 1, BD illustration style, scene: beginning of story "${titreHistoire}", colorful panels, speech bubbles, professional comic art`,
-      // Page 2
-      `Comic book page 2, BD illustration style, scene: development "${titreHistoire}", action scene, colorful panels, professional comic art`,
-      // Page 3
-      `Comic book page 3, BD illustration style, scene: climax "${titreHistoire}", dramatic moment, colorful panels, professional comic art`,
-      // Page 4
-      `Comic book page 4, BD illustration style, scene: happy ending "${titreHistoire}", resolution, colorful panels, professional comic art`
-    ];
-
-    const labels = ['Couverture', 'Page 1', 'Page 2', 'Page 3', 'Page 4'];
     const endpoint = selectedQuality === 'hd' ? '/api/generate/hd' : '/api/generate/standard';
     const borderColor = selectedQuality === 'hd' ? '#ffd700' : '#4a90d9';
     const shadowColor = selectedQuality === 'hd' ? 'rgba(255,215,0,0.5)' : 'rgba(74,144,217,0.4)';
 
     try {
+      // ÉTAPE 1 : Générer l'histoire avec GPT
+      document.getElementById('bdLoadingText').innerHTML = '🧠 <strong style="color:#ffd700">L\'IA crée votre histoire...</strong><br/><span style="font-size:0.85rem; color:#aaa;">Scénario, titre, dialogues...</span>';
+      document.getElementById('bdProgressBar').style.width = '5%';
+      document.getElementById('bdProgressText').textContent = 'Création de l\'histoire...';
+
+      const histRes = await fetch(PROXY_URL + '/api/histoire', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phrase: prompt })
+      });
+      const histData = await histRes.json();
+      if (!histRes.ok) throw new Error(histData.error || 'Erreur génération histoire');
+
+      const histoire = histData.histoire;
+      const titreHistoire = histoire.titre;
+
+      // Afficher le résumé de l'histoire
+      document.getElementById('bdProgressBar').style.width = '15%';
+      document.getElementById('bdProgressText').textContent = 'Histoire créée ! Génération des images...';
+
+      // Construire les prompts à partir de l'histoire générée
+      const prompts = [
+        `Comic book cover, colorful BD style illustration, title "${titreHistoire}", ${histoire.couverture.description_image}, vibrant colors, dynamic characters, professional comic art, high quality`,
+        `Comic book page 1, BD illustration style, ${histoire.pages[0].description_image}, colorful panels, speech bubbles, professional comic art`,
+        `Comic book page 2, BD illustration style, ${histoire.pages[1].description_image}, colorful panels, professional comic art`,
+        `Comic book page 3, BD illustration style, ${histoire.pages[2].description_image}, dramatic colorful panels, professional comic art`,
+        `Comic book page 4, BD illustration style, ${histoire.pages[3].description_image}, happy ending, colorful panels, professional comic art`
+      ];
+
+      const labels = ['Couverture', 'Page 1', 'Page 2', 'Page 3', 'Page 4'];
+
+      // ÉTAPE 2 : Générer les 5 images
       for (let i = 0; i < prompts.length; i++) {
-        // Mise à jour barre de progression
-        const pct = Math.round((i / prompts.length) * 100);
+        const pct = 15 + Math.round((i / prompts.length) * 85);
         document.getElementById('bdProgressBar').style.width = pct + '%';
-        document.getElementById('bdProgressText').textContent = i + ' / 5 images générées';
-        document.getElementById('bdLoadingText').innerHTML = `Génération : <strong style="color:#ffd700">${labels[i]}</strong>...<br/><span style="font-size:0.85rem; color:#aaa;">Environ ${(5-i)*25} secondes restantes</span>`;
+        document.getElementById('bdProgressText').textContent = `Image ${i + 1} / 5 générée`;
+        document.getElementById('bdLoadingText').innerHTML = `🎨 Génération : <strong style="color:#ffd700">${labels[i]}</strong>...<br/><span style="font-size:0.85rem; color:#aaa;">Environ ${(5-i)*25} secondes restantes</span>`;
 
         const res = await fetch(PROXY_URL + endpoint, {
           method: 'POST',
@@ -563,7 +578,6 @@
         const url = data.images[0];
         bdGeneratedUrls.push(url);
 
-        // Afficher progressivement
         const img = document.createElement('img');
         img.src = url;
         img.alt = labels[i];
@@ -571,56 +585,30 @@
 
         if (i === 0) {
           // Couverture avec titre superposé
-          img.style.maxWidth = '320px';
           img.style.display = 'block';
-
-          // Conteneur couverture
           const coverWrap = document.createElement('div');
           coverWrap.style.cssText = 'position:relative; display:inline-block; max-width:320px; width:100%;';
 
-          // Bandeau titre en haut
           const titleBanner = document.createElement('div');
-          titleBanner.style.cssText = `
-            position:absolute; top:0; left:0; right:0;
-            background:linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 80%, transparent 100%);
-            padding:14px 12px 24px;
-            border-radius:12px 12px 0 0;
-            z-index:10;
-            text-align:center;
-          `;
+          titleBanner.style.cssText = 'position:absolute; top:0; left:0; right:0; background:linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 80%, transparent 100%); padding:14px 12px 24px; border-radius:12px 12px 0 0; z-index:10; text-align:center;';
           const titleText = document.createElement('div');
           titleText.textContent = titreHistoire.toUpperCase();
-          titleText.style.cssText = `
-            color:#ffd700;
-            font-size:1.15rem;
-            font-weight:900;
-            font-family:'Impact', 'Arial Black', sans-serif;
-            text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
-            letter-spacing:1px;
-            line-height:1.2;
-            word-break:break-word;
-          `;
+          titleText.style.cssText = 'color:#ffd700; font-size:1.1rem; font-weight:900; font-family:Impact,Arial Black,sans-serif; text-shadow:2px 2px 0 #000,-1px -1px 0 #000; letter-spacing:1px; line-height:1.2; word-break:break-word;';
           titleBanner.appendChild(titleText);
 
-          // Bandeau "SONIA Video BD" en bas
+          // Accroche sous le titre
+          if (histoire.couverture && histoire.couverture.texte_couverture) {
+            const accroche = document.createElement('div');
+            accroche.textContent = histoire.couverture.texte_couverture;
+            accroche.style.cssText = 'color:#fff; font-size:0.78rem; font-style:italic; margin-top:4px; text-shadow:1px 1px 0 #000;';
+            titleBanner.appendChild(accroche);
+          }
+
           const bottomBanner = document.createElement('div');
-          bottomBanner.style.cssText = `
-            position:absolute; bottom:0; left:0; right:0;
-            background:linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 80%, transparent 100%);
-            padding:20px 12px 10px;
-            border-radius:0 0 12px 12px;
-            z-index:10;
-            text-align:center;
-          `;
+          bottomBanner.style.cssText = 'position:absolute; bottom:0; left:0; right:0; background:linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 80%, transparent 100%); padding:20px 12px 10px; border-radius:0 0 12px 12px; z-index:10; text-align:center;';
           const bottomText = document.createElement('div');
           bottomText.textContent = '★ SONIA Video BD ★';
-          bottomText.style.cssText = `
-            color:#fff;
-            font-size:0.8rem;
-            font-weight:700;
-            letter-spacing:2px;
-            text-shadow: 1px 1px 0 #000;
-          `;
+          bottomText.style.cssText = 'color:#fff; font-size:0.8rem; font-weight:700; letter-spacing:2px; text-shadow:1px 1px 0 #000;';
           bottomBanner.appendChild(bottomText);
 
           coverWrap.appendChild(img);
@@ -628,22 +616,48 @@
           coverWrap.appendChild(bottomBanner);
           bdCouverture.appendChild(coverWrap);
           document.getElementById('bdDownload').href = url;
+
+          // Afficher info histoire
+          const infoDiv = document.createElement('div');
+          infoDiv.style.cssText = 'margin-top:12px; padding:12px; background:rgba(255,215,0,0.08); border:1px solid rgba(255,215,0,0.2); border-radius:10px; text-align:left; max-width:320px; width:100%;';
+          infoDiv.innerHTML = `
+            <p style="color:#ffd700; font-weight:700; font-size:0.9rem; margin:0 0 4px;">🎭 Genre : ${histoire.genre || ''}</p>
+            <p style="color:#ccc; font-size:0.82rem; margin:0;">👥 ${histoire.personnages || ''}</p>
+          `;
+          bdCouverture.appendChild(infoDiv);
+
         } else {
-          // Pages
+          // Pages avec narration et dialogue
+          const pageIndex = i - 1;
+          const pageData = histoire.pages[pageIndex];
           const pageDiv = document.createElement('div');
           pageDiv.style.cssText = 'position:relative;';
-          const label = document.createElement('p');
-          label.textContent = labels[i];
-          label.style.cssText = 'color:#aaa; font-size:0.8rem; margin-bottom:6px; font-weight:700;';
-          pageDiv.appendChild(label);
+
+          // Titre de la page
+          const labelEl = document.createElement('p');
+          labelEl.textContent = `📖 ${labels[i]} — ${pageData ? pageData.titre_page : ''}`;
+          labelEl.style.cssText = 'color:#ffd700; font-size:0.85rem; margin-bottom:6px; font-weight:700;';
+          pageDiv.appendChild(labelEl);
           pageDiv.appendChild(img);
+
+          // Narration + dialogue
+          if (pageData) {
+            const textDiv = document.createElement('div');
+            textDiv.style.cssText = 'margin-top:8px; padding:10px 12px; background:rgba(0,0,0,0.4); border-left:3px solid ' + borderColor + '; border-radius:0 8px 8px 0;';
+            textDiv.innerHTML = `
+              <p style="color:#ddd; font-size:0.82rem; margin:0 0 6px; font-style:italic;">📝 ${pageData.narration}</p>
+              <p style="color:#fff; font-size:0.85rem; margin:0; font-weight:600;">💬 ${pageData.dialogue}</p>
+            `;
+            pageDiv.appendChild(textDiv);
+          }
+
           bdPages.appendChild(pageDiv);
         }
       }
 
       // Progression 100%
       document.getElementById('bdProgressBar').style.width = '100%';
-      document.getElementById('bdProgressText').textContent = '5 / 5 images générées';
+      document.getElementById('bdProgressText').textContent = '✅ BD complète ! 5 / 5 images générées';
 
       bdLoading.style.display = 'none';
       bdImages.style.display = 'block';
