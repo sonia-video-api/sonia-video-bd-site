@@ -8,6 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;600;700;800;900&family=Oswald:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <!-- FFmpeg.wasm pour assemblage vidéo côté client -->
+  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+  <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
 </head>
 <body>
 
@@ -180,6 +183,32 @@
             <div style="margin-top:24px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
               <a id="bdDownload" href="#" download="sonia-couverture.png" style="display:inline-block; background:#e63946; color:#fff; padding:12px 28px; border-radius:30px; font-weight:700; text-decoration:none; font-size:1rem;">⬇ Télécharger la couverture</a>
               <button onclick="telechargerToutes()" style="background:#ffd700; color:#000; padding:12px 28px; border-radius:30px; font-weight:700; border:none; cursor:pointer; font-size:1rem;">⬇ Télécharger toutes les pages</button>
+            </div>
+
+            <!-- Bouton Générer Vidéo Complète -->
+            <div style="margin-top:20px; padding:20px; background:rgba(230,57,70,0.08); border:2px solid rgba(230,57,70,0.3); border-radius:16px; max-width:500px; margin:20px auto 0;">
+              <p style="color:#ffd700; font-weight:700; font-size:1rem; margin:0 0 8px;">🎬 Créer la vidéo complète avec voix off</p>
+              <p style="color:#aaa; font-size:0.82rem; margin:0 0 14px;">Assemble les 5 images + voix off automatique → fichier vidéo téléchargeable</p>
+              <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:12px;">
+                <select id="voixVideoSelect" style="padding:8px 14px; border-radius:20px; border:2px solid #ffd700; background:#1a1a00; color:#ffd700; font-size:0.85rem; cursor:pointer;">
+                  <option value="nova">👩 Nova (Femme)</option>
+                  <option value="shimmer">👩 Shimmer (Femme douce)</option>
+                  <option value="alloy">👩 Alloy (Femme neutre)</option>
+                  <option value="echo">👨 Echo (Homme)</option>
+                  <option value="onyx">👨 Onyx (Homme grave)</option>
+                  <option value="fable">👨 Fable (Homme narrateur)</option>
+                </select>
+              </div>
+              <button id="btnGenererVideo" onclick="genererVideoComplete()" style="background:linear-gradient(135deg,#e63946,#c1121f); color:#fff; border:none; padding:14px 36px; border-radius:30px; font-size:1.05rem; font-weight:800; cursor:pointer; box-shadow:0 4px 20px rgba(230,57,70,0.5); letter-spacing:1px;">🎬 GÉNÉRER LA VIDÉO COMPLÈTE</button>
+              <div id="videoGenLoading" style="display:none; margin-top:16px;">
+                <div class="loading-spinner" style="width:32px; height:32px; border-width:3px; margin:0 auto;"></div>
+                <p id="videoGenText" style="color:#ffd700; margin-top:10px; font-size:0.9rem;">⏳ Génération de la vidéo en cours... (2-4 min)</p>
+              </div>
+              <div id="videoGenResult" style="display:none; margin-top:16px;">
+                <p style="color:#00cc44; font-weight:700; margin-bottom:10px;">✅ Vidéo prête !</p>
+                <a id="videoDownloadLink" href="#" download="sonia-video-bd.mp4" style="display:inline-block; background:#00cc44; color:#000; padding:12px 28px; border-radius:30px; font-weight:700; text-decoration:none; font-size:1rem;">⬇ Télécharger la vidéo MP4</a>
+              </div>
+              <div id="videoGenError" style="display:none; color:#ff6b6b; font-size:0.85rem; margin-top:12px;"></div>
             </div>
           </div>
           <div id="bdError" style="display:none; color:#ff6b6b; font-size:0.95rem; padding:16px;"></div>
@@ -559,6 +588,7 @@
       if (!histRes.ok) throw new Error(histData.error || 'Erreur génération histoire');
 
       const histoire = histData.histoire;
+      histoireGeneree = histoire; // Stocker pour la génération vidéo
       const titreHistoire = histoire.titre;
 
       // Afficher le résumé de l'histoire
@@ -698,6 +728,187 @@
       a.click();
       document.body.removeChild(a);
     });
+  }
+
+  // Stocker l'histoire générée pour la vidéo
+  let histoireGeneree = null;
+  let ffmpegInstance = null;
+
+  // Initialiser FFmpeg.wasm
+  async function initFFmpeg() {
+    if (ffmpegInstance) return ffmpegInstance;
+    // FFmpeg.wasm exporte sous window.FFmpegWASM ou window.FFmpeg
+    const FFmpegLib = window.FFmpegWASM || window['@ffmpeg/ffmpeg'];
+    if (!FFmpegLib) throw new Error('FFmpeg.wasm non chargé');
+    const { FFmpeg } = FFmpegLib;
+    const ff = new FFmpeg();
+    ff.on('log', ({ message }) => {
+      console.log('[FFmpeg]', message);
+    });
+    ff.on('progress', ({ progress }) => {
+      const pct = Math.round(progress * 100);
+      const el = document.getElementById('videoGenText');
+      if (el) el.textContent = `🎥 Assemblage vidéo : ${pct}%`;
+    });
+    await ff.load({
+      coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
+      wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm'
+    });
+    ffmpegInstance = ff;
+    return ff;
+  }
+
+  // Convertir base64 en Uint8Array
+  function base64ToUint8Array(base64) {
+    const b64 = base64.split(',')[1] || base64;
+    const bin = atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return arr;
+  }
+
+  async function genererVideoComplete() {
+    if (!histoireGeneree) {
+      alert('Veuillez d’abord créer votre BD !');
+      return;
+    }
+    const voix = document.getElementById('voixVideoSelect').value;
+    const qualite = selectedQuality;
+    const btnVideo = document.getElementById('btnGenererVideo');
+    const loading = document.getElementById('videoGenLoading');
+    const result = document.getElementById('videoGenResult');
+    const error = document.getElementById('videoGenError');
+    const texte = document.getElementById('videoGenText');
+
+    btnVideo.disabled = true;
+    btnVideo.textContent = '⏳ Génération...';
+    loading.style.display = 'block';
+    result.style.display = 'none';
+    error.style.display = 'none';
+    error.textContent = '';
+
+    try {
+      // ÉTAPE 1 : Récupérer les segments (images + audio) depuis le serveur
+      texte.textContent = '🎨 Génération des images BD via DALL-E 3...';
+      const res = await fetch(PROXY_URL + '/api/generer-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ histoire: histoireGeneree, qualite, voix })
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Erreur génération vidéo');
+      }
+
+      const data = await res.json();
+      const segments = data.segments || [];
+
+      if (!segments.length) throw new Error('Aucun segment reçu du serveur');
+
+      // ÉTAPE 2 : Charger FFmpeg.wasm
+      texte.textContent = '⏳ Chargement de l’assembleur vidéo (FFmpeg.wasm)...';
+      let ff;
+      try {
+        ff = await initFFmpeg();
+      } catch(ffErr) {
+        // Fallback si FFmpeg.wasm ne charge pas : proposer téléchargement images
+        console.warn('FFmpeg.wasm non disponible:', ffErr);
+        loading.style.display = 'none';
+        result.style.display = 'block';
+        // Mettre à jour les images générées avec les nouvelles
+        bdGeneratedUrls = segments.map(s => s.image);
+        result.innerHTML = `
+          <p style="color:#ffd700; font-weight:700; margin-bottom:8px;">✅ Images générées avec succès !</p>
+          <p style="color:#aaa; font-size:0.82rem; margin-bottom:12px;">L’assemblage vidéo nécessite un navigateur compatible WebAssembly.<br>Téléchargez les images pour les utiliser.</p>
+          <button onclick="telechargerToutes()" style="background:#ffd700; color:#000; padding:12px 28px; border-radius:30px; font-weight:700; border:none; cursor:pointer;">⬇ Télécharger toutes les images</button>
+        `;
+        return;
+      }
+
+      // ÉTAPE 3 : Assembler la vidéo avec FFmpeg.wasm
+      texte.textContent = '🎥 Assemblage de la vidéo MP4...';
+
+      // FFmpegUtil exporte fetchFile
+      const FFmpegUtilLib = window.FFmpegUtil || window['@ffmpeg/util'];
+      const segmentFiles = [];
+
+      for (let i = 0; i < segments.length; i++) {
+        const seg = segments[i];
+        texte.textContent = `🖼️ Traitement image ${i + 1}/${segments.length}...`;
+
+        // Écrire l'image dans le FS virtuel de FFmpeg
+        const imgData = base64ToUint8Array(seg.image);
+        await ff.writeFile(`img_${i}.png`, imgData);
+
+        if (seg.audio) {
+          // Avec audio : créer un segment vidéo avec la durée de l'audio
+          const audioData = base64ToUint8Array(seg.audio);
+          await ff.writeFile(`audio_${i}.mp3`, audioData);
+
+          await ff.exec([
+            '-loop', '1', '-i', `img_${i}.png`,
+            '-i', `audio_${i}.mp3`,
+            '-c:v', 'libx264', '-tune', 'stillimage',
+            '-c:a', 'aac', '-b:a', '128k',
+            '-pix_fmt', 'yuv420p',
+            '-vf', 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2',
+            '-shortest',
+            `seg_${i}.mp4`, '-y'
+          ]);
+        } else {
+          // Sans audio : 5 secondes par image
+          await ff.exec([
+            '-loop', '1', '-i', `img_${i}.png`,
+            '-c:v', 'libx264', '-t', '5',
+            '-pix_fmt', 'yuv420p',
+            '-vf', 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2',
+            `seg_${i}.mp4`, '-y'
+          ]);
+        }
+        segmentFiles.push(`seg_${i}.mp4`);
+      }
+
+      // Concaténer tous les segments
+      texte.textContent = '🔗 Concaténation des segments...';
+      const listContent = segmentFiles.map(f => `file '${f}'`).join('\n');
+      await ff.writeFile('list.txt', listContent);
+
+      await ff.exec([
+        '-f', 'concat', '-safe', '0',
+        '-i', 'list.txt',
+        '-c', 'copy',
+        'video_final.mp4', '-y'
+      ]);
+
+      // Lire la vidéo finale
+      const videoData = await ff.readFile('video_final.mp4');
+      const videoBlob = new Blob([videoData.buffer], { type: 'video/mp4' });
+      const videoUrl = URL.createObjectURL(videoBlob);
+
+      // Afficher le résultat
+      loading.style.display = 'none';
+      result.style.display = 'block';
+      result.innerHTML = `
+        <p style="color:#00cc44; font-weight:800; font-size:1.1rem; margin-bottom:12px;">✅ Vidéo BD prête !</p>
+        <video controls style="width:100%; max-width:320px; border-radius:12px; margin-bottom:12px; border:2px solid #ffd700;">
+          <source src="${videoUrl}" type="video/mp4">
+        </video><br>
+        <a href="${videoUrl}" download="sonia-video-bd-${Date.now()}.mp4"
+           style="display:inline-block; background:linear-gradient(135deg,#00cc44,#009933); color:#fff; padding:14px 32px; border-radius:30px; font-weight:800; text-decoration:none; font-size:1rem; box-shadow:0 4px 20px rgba(0,204,68,0.4);">
+          ⬇ Télécharger la vidéo MP4
+        </a>
+      `;
+
+    } catch(err) {
+      loading.style.display = 'none';
+      error.style.display = 'block';
+      error.innerHTML = `❌ ${err.message}<br><small style="color:#888;">Conseil : Essayez sur Chrome ou Firefox à jour.</small>`;
+      console.error('Erreur génération vidéo:', err);
+    } finally {
+      btnVideo.disabled = false;
+      btnVideo.textContent = '🎥 GÉNÉRER LA VIDÉO COMPLÈTE';
+    }
   }
 
   // ===== MUSIQUES LIBRES DE DROITS (Jamendo API) =====
