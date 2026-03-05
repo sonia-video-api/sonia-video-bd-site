@@ -111,14 +111,27 @@
       <h2 class="create-title">Crée ta <span class="highlight-white">BD vidéo</span> en <span class="highlight-red">1 phrase</span></h2>
       <div class="create-form-wrap">
         <div class="create-form">
-          <input type="text" class="create-input" placeholder="Décris ta vidéo...  (ex: BD romantique avec voix off dramatique)" />
-          <div class="create-image-add">
+          <input type="text" class="create-input" id="videoPrompt" placeholder="Décris ta vidéo...  (ex: BD romantique avec voix off dramatique)" />
+          <div class="create-image-add" onclick="document.getElementById('imgUpload').click()" style="cursor:pointer">
             <span class="camera-icon">📷</span>
             <strong>Ajouter une image</strong> <span class="optional">(optionnel)</span>
             <input type="file" accept="image/*" style="display:none" id="imgUpload" />
           </div>
         </div>
-        <button class="btn-create-video" onclick="alert('Fonctionnalité bientôt disponible !')">CRÉER MA VIDÉO</button>
+        <button class="btn-create-video" id="btnCreer" onclick="genererBD()">CRÉER MA VIDÉO</button>
+        <!-- Résultat génération BD -->
+        <div id="bdResult" style="display:none; margin-top:24px; text-align:center;">
+          <div id="bdLoading" style="display:none;">
+            <div class="loading-spinner"></div>
+            <p style="color:#ffd700; margin-top:12px; font-size:1rem;">Génération de votre BD en cours...<br/><span style="font-size:0.85rem; color:#aaa;">Cela peut prendre 20-40 secondes</span></p>
+          </div>
+          <div id="bdImages" style="display:none;">
+            <p style="color:#ffd700; font-size:1.1rem; margin-bottom:12px;">✅ Votre BD est prête !</p>
+            <div id="bdImgContainer" style="display:flex; flex-wrap:wrap; gap:12px; justify-content:center;"></div>
+            <a id="bdDownload" href="#" download="sonia-bd.png" style="display:inline-block; margin-top:16px; background:#e63946; color:#fff; padding:12px 28px; border-radius:30px; font-weight:700; text-decoration:none; font-size:1rem;">⬇ Télécharger ma BD</a>
+          </div>
+          <div id="bdError" style="display:none; color:#ff6b6b; font-size:0.95rem;"></div>
+        </div>
       </div>
     </div>
   </section>
@@ -284,6 +297,95 @@
     </div>
   </footer>
 
+  <script src="config.js"></script>
   <script src="script.js"></script>
+  <script>
+  // ===== API REPLICATE HERGÉ STYLE =====
+  // Token chargé depuis config.js (non versionné)
+  const REPLICATE_TOKEN = window.REPLICATE_API_TOKEN || '';
+  const MODEL_VERSION = '3092b9f17c96c7a73952fc9170273b0362d53de1c0f27fcbd54773542e6c0e62';
+
+  async function genererBD() {
+    const prompt = document.getElementById('videoPrompt').value.trim();
+    if (!prompt) {
+      alert('Veuillez décrire votre vidéo BD !');
+      return;
+    }
+
+    // Afficher le loading
+    const btnCreer = document.getElementById('btnCreer');
+    const bdResult = document.getElementById('bdResult');
+    const bdLoading = document.getElementById('bdLoading');
+    const bdImages = document.getElementById('bdImages');
+    const bdError = document.getElementById('bdError');
+    const bdImgContainer = document.getElementById('bdImgContainer');
+
+    btnCreer.disabled = true;
+    btnCreer.textContent = 'Génération...';
+    bdResult.style.display = 'block';
+    bdLoading.style.display = 'block';
+    bdImages.style.display = 'none';
+    bdError.style.display = 'none';
+    bdImgContainer.innerHTML = '';
+
+    // Ajouter herge_style au prompt
+    const fullPrompt = prompt + ' herge_style';
+
+    try {
+      // Lancer la prédiction
+      const startRes = await fetch('https://api.replicate.com/v1/predictions', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Token ' + REPLICATE_TOKEN,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          version: MODEL_VERSION,
+          input: { prompt: fullPrompt, num_outputs: 1 }
+        })
+      });
+
+      if (!startRes.ok) throw new Error('Erreur de connexion à l\'API');
+      const prediction = await startRes.json();
+
+      // Attendre le résultat (polling)
+      let result = prediction;
+      let attempts = 0;
+      while (result.status !== 'succeeded' && result.status !== 'failed' && attempts < 60) {
+        await new Promise(r => setTimeout(r, 2000));
+        const pollRes = await fetch('https://api.replicate.com/v1/predictions/' + result.id, {
+          headers: { 'Authorization': 'Token ' + REPLICATE_TOKEN }
+        });
+        result = await pollRes.json();
+        attempts++;
+      }
+
+      if (result.status === 'succeeded' && result.output && result.output.length > 0) {
+        // Afficher les images
+        bdLoading.style.display = 'none';
+        bdImages.style.display = 'block';
+        result.output.forEach((imgUrl, i) => {
+          const img = document.createElement('img');
+          img.src = imgUrl;
+          img.alt = 'BD générée';
+          img.style.cssText = 'max-width:320px; width:100%; border-radius:12px; border:3px solid #ffd700; box-shadow:0 0 20px rgba(255,215,0,0.4);';
+          bdImgContainer.appendChild(img);
+          if (i === 0) {
+            document.getElementById('bdDownload').href = imgUrl;
+          }
+        });
+      } else {
+        throw new Error('La génération a échoué. Veuillez réessayer.');
+      }
+    } catch (err) {
+      bdLoading.style.display = 'none';
+      bdError.style.display = 'block';
+      bdError.textContent = '❌ Erreur : ' + err.message;
+    } finally {
+      btnCreer.disabled = false;
+      btnCreer.textContent = 'CRÉER MA VIDÉO';
+    }
+  }
+  </script>
 </body>
 </html>
