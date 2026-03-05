@@ -11,6 +11,22 @@
 </head>
 <body>
 
+  <!-- ===== BARRE DE NAVIGATION ===== -->
+  <nav class="navbar">
+    <div class="nav-logo">🎬 Sonia Video BD</div>
+    <div class="nav-user" id="navUser">
+      <button class="btn-google-login" onclick="loginWithGoogle()">
+        <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+          <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+          <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+        </svg>
+        Se connecter avec Google
+      </button>
+    </div>
+  </nav>
+
   <!-- ===== HERO SECTION ===== -->
   <section class="hero">
     <div class="hero-bg"></div>
@@ -842,6 +858,77 @@
   window.speechSynthesis.onvoiceschanged = function() {
     window.speechSynthesis.getVoices();
   };
+
+  // ===== GOOGLE OAUTH =====
+  const PROXY_BASE = 'https://sonia-proxy.onrender.com';
+
+  function loginWithGoogle() {
+    // Rediriger vers le proxy qui lance le flow OAuth Google
+    window.location.href = PROXY_BASE + '/auth/google';
+  }
+
+  function logoutUser() {
+    localStorage.removeItem('sonia_user');
+    updateNavUser(null);
+  }
+
+  function updateNavUser(user) {
+    const navUser = document.getElementById('navUser');
+    if (user) {
+      navUser.innerHTML = `
+        <div style="display:flex; align-items:center; gap:10px;">
+          <img src="${user.picture}" alt="${user.name}" style="width:36px; height:36px; border-radius:50%; border:2px solid #ffd700;" onerror="this.style.display='none'">
+          <span style="color:#ffd700; font-weight:700; font-size:0.9rem;">${user.name}</span>
+          <button onclick="logoutUser()" style="background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:4px 10px; border-radius:20px; cursor:pointer; font-size:0.8rem;">Déconnexion</button>
+        </div>
+      `;
+    } else {
+      navUser.innerHTML = `
+        <button class="btn-google-login" onclick="loginWithGoogle()">
+          <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+            <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+            <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+            <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+          </svg>
+          Se connecter avec Google
+        </button>
+      `;
+    }
+  }
+
+  // Vérifier si l'utilisateur est déjà connecté (depuis localStorage)
+  function checkLoginStatus() {
+    // Vérifier si on revient du callback OAuth (paramètre ?user= dans l'URL)
+    const urlParams = new URLSearchParams(window.location.search);
+    const userParam = urlParams.get('user');
+    const errorParam = urlParams.get('error');
+
+    if (userParam) {
+      try {
+        const user = JSON.parse(decodeURIComponent(userParam));
+        localStorage.setItem('sonia_user', JSON.stringify(user));
+        updateNavUser(user);
+        // Nettoyer l'URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } catch(e) { console.error('Erreur parsing user:', e); }
+    } else if (errorParam) {
+      console.error('Erreur OAuth:', errorParam);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else {
+      // Vérifier localStorage
+      const saved = localStorage.getItem('sonia_user');
+      if (saved) {
+        try {
+          const user = JSON.parse(saved);
+          updateNavUser(user);
+        } catch(e) { localStorage.removeItem('sonia_user'); }
+      }
+    }
+  }
+
+  // Lancer la vérification au chargement
+  checkLoginStatus();
   </script>
 </body>
 </html>
