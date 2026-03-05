@@ -380,10 +380,8 @@
   <script src="config.js"></script>
   <script src="script.js"></script>
   <script>
-  // ===== API REPLICATE =====
-  const REPLICATE_TOKEN = window.REPLICATE_API_TOKEN || '';
-  const HERGE_MODEL = '3092b9f17c96c7a73952fc9170273b0362d53de1c0f27fcbd54773542e6c0e62';
-  const DALLE3_MODEL = 'openai/dall-e-3';
+  // ===== API PROXY =====
+  const PROXY_URL = 'https://sonia-proxy.onrender.com';
 
   // Qualité sélectionnée : 'standard' ou 'hd'
   let selectedQuality = 'standard';
@@ -445,86 +443,40 @@
       let imgUrl = null;
 
       if (selectedQuality === 'standard') {
-        // === HERGÉ STYLE (Standard) ===
-        const fullPrompt = prompt + ' herge_style';
-        const startRes = await fetch('https://api.replicate.com/v1/predictions', {
+        // === HERGÉ STYLE (Standard) via proxy ===
+        const res = await fetch(PROXY_URL + '/api/generate/standard', {
           method: 'POST',
-          headers: {
-            'Authorization': 'Token ' + REPLICATE_TOKEN,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            version: HERGE_MODEL,
-            input: { prompt: fullPrompt, num_outputs: 1 }
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: prompt })
         });
-        if (!startRes.ok) throw new Error('Erreur de connexion à l\'API Standard');
-        const prediction = await startRes.json();
-        let result = prediction;
-        let attempts = 0;
-        while (result.status !== 'succeeded' && result.status !== 'failed' && attempts < 60) {
-          await new Promise(r => setTimeout(r, 2000));
-          const pollRes = await fetch('https://api.replicate.com/v1/predictions/' + result.id, {
-            headers: { 'Authorization': 'Token ' + REPLICATE_TOKEN }
-          });
-          result = await pollRes.json();
-          attempts++;
-        }
-        if (result.status === 'succeeded' && result.output && result.output.length > 0) {
-          result.output.forEach((url, i) => {
-            const img = document.createElement('img');
-            img.src = url;
-            img.alt = 'BD Hergé générée';
-            img.style.cssText = 'max-width:320px; width:100%; border-radius:12px; border:3px solid #4a90d9; box-shadow:0 0 20px rgba(74,144,217,0.4);';
-            bdImgContainer.appendChild(img);
-            if (i === 0) document.getElementById('bdDownload').href = url;
-          });
-        } else {
-          throw new Error('Génération Hergé échouée. Veuillez réessayer.');
-        }
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur API Standard');
+        data.images.forEach((url, i) => {
+          const img = document.createElement('img');
+          img.src = url;
+          img.alt = 'BD Hergé générée';
+          img.style.cssText = 'max-width:320px; width:100%; border-radius:12px; border:3px solid #4a90d9; box-shadow:0 0 20px rgba(74,144,217,0.4);';
+          bdImgContainer.appendChild(img);
+          if (i === 0) document.getElementById('bdDownload').href = url;
+        });
 
       } else {
-        // === DALL-E 3 (HD) ===
-        const startRes = await fetch('https://api.replicate.com/v1/models/openai/dall-e-3/predictions', {
+        // === DALL-E 3 (HD) via proxy ===
+        const res = await fetch(PROXY_URL + '/api/generate/hd', {
           method: 'POST',
-          headers: {
-            'Authorization': 'Token ' + REPLICATE_TOKEN,
-            'Content-Type': 'application/json',
-            'Prefer': 'wait'
-          },
-          body: JSON.stringify({
-            input: {
-              prompt: prompt,
-              quality: 'hd',
-              size: '1024x1792'
-            }
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: prompt })
         });
-        if (!startRes.ok) throw new Error('Erreur de connexion à l\'API HD');
-        const prediction = await startRes.json();
-        let result = prediction;
-        let attempts = 0;
-        while (result.status !== 'succeeded' && result.status !== 'failed' && attempts < 60) {
-          await new Promise(r => setTimeout(r, 2000));
-          const pollRes = await fetch('https://api.replicate.com/v1/predictions/' + result.id, {
-            headers: { 'Authorization': 'Token ' + REPLICATE_TOKEN }
-          });
-          result = await pollRes.json();
-          attempts++;
-        }
-        if (result.status === 'succeeded' && result.output) {
-          const urls = Array.isArray(result.output) ? result.output : [result.output];
-          urls.forEach((url, i) => {
-            const img = document.createElement('img');
-            img.src = url;
-            img.alt = 'Image HD DALL-E 3';
-            img.style.cssText = 'max-width:320px; width:100%; border-radius:12px; border:3px solid #ffd700; box-shadow:0 0 20px rgba(255,215,0,0.5);';
-            bdImgContainer.appendChild(img);
-            if (i === 0) document.getElementById('bdDownload').href = url;
-          });
-        } else {
-          throw new Error('Génération DALL-E 3 échouée. Veuillez réessayer.');
-        }
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erreur API HD');
+        data.images.forEach((url, i) => {
+          const img = document.createElement('img');
+          img.src = url;
+          img.alt = 'Image HD DALL-E 3';
+          img.style.cssText = 'max-width:320px; width:100%; border-radius:12px; border:3px solid #ffd700; box-shadow:0 0 20px rgba(255,215,0,0.5);';
+          bdImgContainer.appendChild(img);
+          if (i === 0) document.getElementById('bdDownload').href = url;
+        });
       }
 
       bdLoading.style.display = 'none';
