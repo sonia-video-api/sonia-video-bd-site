@@ -110,6 +110,18 @@
     <div class="create-content">
       <h2 class="create-title">Crée ta <span class="highlight-white">BD vidéo</span> en <span class="highlight-red">1 phrase</span></h2>
       <div class="create-form-wrap">
+        <!-- Choix qualité -->
+        <div class="quality-selector" style="display:flex; gap:12px; justify-content:center; margin-bottom:18px;">
+          <button id="btnStandard" class="quality-btn active" onclick="setQuality('standard')" style="padding:10px 24px; border-radius:25px; border:2px solid #4a90d9; background:#1a3a5c; color:#fff; font-weight:700; font-size:0.95rem; cursor:pointer; transition:all 0.3s;">
+            🎨 Standard — Hergé Style
+          </button>
+          <button id="btnHD" class="quality-btn" onclick="setQuality('hd')" style="padding:10px 24px; border-radius:25px; border:2px solid #ffd700; background:#2a1a00; color:#ffd700; font-weight:700; font-size:0.95rem; cursor:pointer; transition:all 0.3s;">
+            ⭐ HD — DALL-E 3
+          </button>
+        </div>
+        <div id="qualityInfo" style="text-align:center; margin-bottom:14px; font-size:0.85rem; color:#aaa;">
+          Style BD Hergé/Tintin — à partir de 0,91 €
+        </div>
         <div class="create-form">
           <input type="text" class="create-input" id="videoPrompt" placeholder="Décris ta vidéo...  (ex: BD romantique avec voix off dramatique)" />
           <div class="create-image-add" onclick="document.getElementById('imgUpload').click()" style="cursor:pointer">
@@ -160,7 +172,7 @@
             <li>✅ Sous-titres automatiques</li>
             <li>✅ Idéal TikTok</li>
           </ul>
-          <button class="btn-tarif standard-btn" onclick="scrollToCreate()">Choisir Standard</button>
+          <button class="btn-tarif standard-btn" onclick="choisirQualite('standard')">Choisir Standard</button>
           <div class="tarif-meta">
             <div class="meta-row"><span>Résolution</span><span class="meta-val">576×1024</span></div>
             <div class="meta-row"><span>✅ Voix off</span><span class="meta-val">✅</span></div>
@@ -182,7 +194,7 @@
             <li>✅ Idéal Reels / YouTube Shorts</li>
             <li>✅ Voix off premium</li>
           </ul>
-          <button class="btn-tarif hd-btn" onclick="scrollToCreate()">Choisir HD</button>
+          <button class="btn-tarif hd-btn" onclick="choisirQualite('hd')">Choisir HD</button>
           <div class="tarif-meta">
             <div class="meta-row"><span>Standard</span><span class="meta-val gold-text">1080×1920</span></div>
             <div class="meta-row"><span>✅ Voix off</span><span class="meta-val gold-text">✅ Premium</span></div>
@@ -300,10 +312,44 @@
   <script src="config.js"></script>
   <script src="script.js"></script>
   <script>
-  // ===== API REPLICATE HERGÉ STYLE =====
-  // Token chargé depuis config.js (non versionné)
+  // ===== API REPLICATE =====
   const REPLICATE_TOKEN = window.REPLICATE_API_TOKEN || '';
-  const MODEL_VERSION = '3092b9f17c96c7a73952fc9170273b0362d53de1c0f27fcbd54773542e6c0e62';
+  const HERGE_MODEL = '3092b9f17c96c7a73952fc9170273b0362d53de1c0f27fcbd54773542e6c0e62';
+  const DALLE3_MODEL = 'openai/dall-e-3';
+
+  // Qualité sélectionnée : 'standard' ou 'hd'
+  let selectedQuality = 'standard';
+
+  function setQuality(q) {
+    selectedQuality = q;
+    const btnS = document.getElementById('btnStandard');
+    const btnH = document.getElementById('btnHD');
+    const info = document.getElementById('qualityInfo');
+    if (q === 'standard') {
+      btnS.style.background = '#1a3a5c';
+      btnS.style.border = '2px solid #4a90d9';
+      btnS.style.color = '#fff';
+      btnH.style.background = '#2a1a00';
+      btnH.style.border = '2px solid #ffd700';
+      btnH.style.color = '#ffd700';
+      info.textContent = 'Style BD Hergé/Tintin — à partir de 0,91 €';
+      info.style.color = '#aaa';
+    } else {
+      btnH.style.background = '#ffd700';
+      btnH.style.border = '2px solid #ffd700';
+      btnH.style.color = '#000';
+      btnS.style.background = '#2a2a2a';
+      btnS.style.border = '2px solid #555';
+      btnS.style.color = '#888';
+      info.textContent = '⭐ Image ultra-réaliste DALL-E 3 — à partir de 1,61 €';
+      info.style.color = '#ffd700';
+    }
+  }
+
+  function choisirQualite(q) {
+    setQuality(q);
+    document.getElementById('create').scrollIntoView({ behavior: 'smooth' });
+  }
 
   async function genererBD() {
     const prompt = document.getElementById('videoPrompt').value.trim();
@@ -312,7 +358,6 @@
       return;
     }
 
-    // Afficher le loading
     const btnCreer = document.getElementById('btnCreer');
     const bdResult = document.getElementById('bdResult');
     const bdLoading = document.getElementById('bdLoading');
@@ -328,55 +373,95 @@
     bdError.style.display = 'none';
     bdImgContainer.innerHTML = '';
 
-    // Ajouter herge_style au prompt
-    const fullPrompt = prompt + ' herge_style';
-
     try {
-      // Lancer la prédiction
-      const startRes = await fetch('https://api.replicate.com/v1/predictions', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Token ' + REPLICATE_TOKEN,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          version: MODEL_VERSION,
-          input: { prompt: fullPrompt, num_outputs: 1 }
-        })
-      });
+      let imgUrl = null;
 
-      if (!startRes.ok) throw new Error('Erreur de connexion à l\'API');
-      const prediction = await startRes.json();
-
-      // Attendre le résultat (polling)
-      let result = prediction;
-      let attempts = 0;
-      while (result.status !== 'succeeded' && result.status !== 'failed' && attempts < 60) {
-        await new Promise(r => setTimeout(r, 2000));
-        const pollRes = await fetch('https://api.replicate.com/v1/predictions/' + result.id, {
-          headers: { 'Authorization': 'Token ' + REPLICATE_TOKEN }
+      if (selectedQuality === 'standard') {
+        // === HERGÉ STYLE (Standard) ===
+        const fullPrompt = prompt + ' herge_style';
+        const startRes = await fetch('https://api.replicate.com/v1/predictions', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Token ' + REPLICATE_TOKEN,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            version: HERGE_MODEL,
+            input: { prompt: fullPrompt, num_outputs: 1 }
+          })
         });
-        result = await pollRes.json();
-        attempts++;
-      }
+        if (!startRes.ok) throw new Error('Erreur de connexion à l\'API Standard');
+        const prediction = await startRes.json();
+        let result = prediction;
+        let attempts = 0;
+        while (result.status !== 'succeeded' && result.status !== 'failed' && attempts < 60) {
+          await new Promise(r => setTimeout(r, 2000));
+          const pollRes = await fetch('https://api.replicate.com/v1/predictions/' + result.id, {
+            headers: { 'Authorization': 'Token ' + REPLICATE_TOKEN }
+          });
+          result = await pollRes.json();
+          attempts++;
+        }
+        if (result.status === 'succeeded' && result.output && result.output.length > 0) {
+          result.output.forEach((url, i) => {
+            const img = document.createElement('img');
+            img.src = url;
+            img.alt = 'BD Hergé générée';
+            img.style.cssText = 'max-width:320px; width:100%; border-radius:12px; border:3px solid #4a90d9; box-shadow:0 0 20px rgba(74,144,217,0.4);';
+            bdImgContainer.appendChild(img);
+            if (i === 0) document.getElementById('bdDownload').href = url;
+          });
+        } else {
+          throw new Error('Génération Hergé échouée. Veuillez réessayer.');
+        }
 
-      if (result.status === 'succeeded' && result.output && result.output.length > 0) {
-        // Afficher les images
-        bdLoading.style.display = 'none';
-        bdImages.style.display = 'block';
-        result.output.forEach((imgUrl, i) => {
-          const img = document.createElement('img');
-          img.src = imgUrl;
-          img.alt = 'BD générée';
-          img.style.cssText = 'max-width:320px; width:100%; border-radius:12px; border:3px solid #ffd700; box-shadow:0 0 20px rgba(255,215,0,0.4);';
-          bdImgContainer.appendChild(img);
-          if (i === 0) {
-            document.getElementById('bdDownload').href = imgUrl;
-          }
-        });
       } else {
-        throw new Error('La génération a échoué. Veuillez réessayer.');
+        // === DALL-E 3 (HD) ===
+        const startRes = await fetch('https://api.replicate.com/v1/models/openai/dall-e-3/predictions', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Token ' + REPLICATE_TOKEN,
+            'Content-Type': 'application/json',
+            'Prefer': 'wait'
+          },
+          body: JSON.stringify({
+            input: {
+              prompt: prompt,
+              quality: 'hd',
+              size: '1024x1792'
+            }
+          })
+        });
+        if (!startRes.ok) throw new Error('Erreur de connexion à l\'API HD');
+        const prediction = await startRes.json();
+        let result = prediction;
+        let attempts = 0;
+        while (result.status !== 'succeeded' && result.status !== 'failed' && attempts < 60) {
+          await new Promise(r => setTimeout(r, 2000));
+          const pollRes = await fetch('https://api.replicate.com/v1/predictions/' + result.id, {
+            headers: { 'Authorization': 'Token ' + REPLICATE_TOKEN }
+          });
+          result = await pollRes.json();
+          attempts++;
+        }
+        if (result.status === 'succeeded' && result.output) {
+          const urls = Array.isArray(result.output) ? result.output : [result.output];
+          urls.forEach((url, i) => {
+            const img = document.createElement('img');
+            img.src = url;
+            img.alt = 'Image HD DALL-E 3';
+            img.style.cssText = 'max-width:320px; width:100%; border-radius:12px; border:3px solid #ffd700; box-shadow:0 0 20px rgba(255,215,0,0.5);';
+            bdImgContainer.appendChild(img);
+            if (i === 0) document.getElementById('bdDownload').href = url;
+          });
+        } else {
+          throw new Error('Génération DALL-E 3 échouée. Veuillez réessayer.');
+        }
       }
+
+      bdLoading.style.display = 'none';
+      bdImages.style.display = 'block';
+
     } catch (err) {
       bdLoading.style.display = 'none';
       bdError.style.display = 'block';
