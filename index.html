@@ -159,6 +159,30 @@
           <button onclick="testerRechercheWeb()" style="background:rgba(255,215,0,0.15); border:1px solid #ffd700; color:#ffd700; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:0.85rem;">🔍 Tester la recherche</button>
         </div>
         <div id="webSearchResult" style="display:none; background:rgba(0,0,0,0.4); border:1px solid #ffd700; border-radius:12px; padding:12px; margin-bottom:12px; max-width:600px; margin-left:auto; margin-right:auto; text-align:left; font-size:0.85rem; color:#ddd;"></div>
+
+        <!-- Section Réseaux Sociaux -->
+        <div style="max-width:600px; margin:0 auto 18px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); border-radius:16px; padding:16px;">
+          <p style="text-align:center; color:#ffd700; font-weight:700; font-size:0.95rem; margin-bottom:12px;">🎭 Créer une BD basée sur un profil réseau social</p>
+          <div style="display:flex; gap:8px; justify-content:center; margin-bottom:12px; flex-wrap:wrap;">
+            <button id="btnTikTok" onclick="setSocial('tiktok')" style="padding:8px 16px; border-radius:20px; border:2px solid #ff0050; background:#1a0010; color:#ff0050; font-weight:700; font-size:0.85rem; cursor:pointer;">🎵 TikTok</button>
+            <button id="btnYouTube" onclick="setSocial('youtube')" style="padding:8px 16px; border-radius:20px; border:2px solid #ff4444; background:#1a0000; color:#ff4444; font-weight:700; font-size:0.85rem; cursor:pointer;">▶ YouTube</button>
+            <button id="btnTwitter" onclick="setSocial('twitter')" style="padding:8px 16px; border-radius:20px; border:2px solid #1da1f2; background:#001a2a; color:#1da1f2; font-weight:700; font-size:0.85rem; cursor:pointer;">🐦 Twitter/X</button>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span style="color:#aaa; font-size:0.9rem; white-space:nowrap;">@</span>
+            <input type="text" id="socialUsername" placeholder="Entrez le nom d'utilisateur (ex: cyrilledorveaux76)" style="flex:1; padding:10px 16px; border-radius:25px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; font-size:0.9rem; outline:none;" />
+            <button onclick="genererBDSocial()" style="padding:10px 20px; border-radius:25px; background:linear-gradient(135deg,#ff0050,#ff4444); color:#fff; border:none; font-weight:700; cursor:pointer; font-size:0.9rem; white-space:nowrap;">🚀 Générer</button>
+          </div>
+          <div id="socialProfil" style="display:none; margin-top:12px; padding:10px; background:rgba(0,0,0,0.3); border-radius:10px; display:flex; align-items:center; gap:12px;">
+            <img id="socialAvatar" src="" style="width:48px; height:48px; border-radius:50%; object-fit:cover; border:2px solid #ffd700;" />
+            <div>
+              <p id="socialNom" style="color:#ffd700; font-weight:700; margin:0;"></p>
+              <p id="socialBio" style="color:#aaa; font-size:0.82rem; margin:2px 0 0;"></p>
+              <p id="socialFollowers" style="color:#fff; font-size:0.8rem; margin:2px 0 0;"></p>
+            </div>
+          </div>
+        </div>
+
         <button class="btn-create-video" id="btnCreer" onclick="genererBD()">📖 CRÉER MA BD</button>
 
         <!-- Résultat génération BD -->
@@ -1303,6 +1327,129 @@
     if (confirm('Vider tout l\'historique ?')) {
       localStorage.removeItem('sonia_historique');
       afficherHistorique();
+    }
+  }
+
+  // === FONCTIONS RÉSEAUX SOCIAUX ===
+  let selectedSocial = 'tiktok';
+
+  function setSocial(plateforme) {
+    selectedSocial = plateforme;
+    // Mettre à jour les boutons
+    document.getElementById('btnTikTok').style.opacity = plateforme === 'tiktok' ? '1' : '0.5';
+    document.getElementById('btnYouTube').style.opacity = plateforme === 'youtube' ? '1' : '0.5';
+    document.getElementById('btnTwitter').style.opacity = plateforme === 'twitter' ? '1' : '0.5';
+  }
+
+  async function genererBDSocial() {
+    const username = document.getElementById('socialUsername').value.trim();
+    if (!username) {
+      alert('Entrez un nom d\'utilisateur !');
+      return;
+    }
+
+    const btnSocial = document.querySelector('[onclick="genererBDSocial()"]');
+    btnSocial.disabled = true;
+    btnSocial.textContent = '⏳ Chargement...';
+
+    // Afficher le chargement BD
+    document.getElementById('bdResult').style.display = 'block';
+    document.getElementById('bdLoading').style.display = 'block';
+    document.getElementById('bdImages').style.display = 'none';
+    document.getElementById('bdLoadingText').innerHTML = `🔍 Analyse du profil @${username} sur ${selectedSocial}...<br/><span style="font-size:0.85rem; color:#aaa;">Récupération des infos + création de l'histoire</span>`;
+    document.getElementById('bdProgressBar').style.width = '10%';
+    document.getElementById('bdProgressText').textContent = 'Analyse du profil...';
+
+    try {
+      const res = await fetch(PROXY_URL + '/api/profil-social', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, plateforme: selectedSocial })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Erreur réseau social');
+      }
+
+      const data = await res.json();
+      const profil = data.profil;
+      const histoire = data.histoire;
+
+      // Afficher le profil récupéré
+      if (profil.avatar) {
+        document.getElementById('socialAvatar').src = profil.avatar;
+        document.getElementById('socialProfil').style.display = 'flex';
+      }
+      document.getElementById('socialNom').textContent = `@${profil.nom} • ${profil.plateforme.toUpperCase()}`;
+      document.getElementById('socialBio').textContent = profil.bio || '';
+      document.getElementById('socialFollowers').textContent = profil.followers ? `👥 ${profil.followers} abonnés` : '';
+
+      // Remplir le champ texte avec le titre de l'histoire
+      document.getElementById('videoPrompt').value = histoire.titre || `BD de @${profil.nom}`;
+
+      // Sauvegarder l'histoire et générer les images
+      histoireGeneree = histoire;
+
+      document.getElementById('bdLoadingText').innerHTML = `🎨 Création des images BD pour @${profil.nom}...<br/><span style="font-size:0.85rem; color:#aaa;">Génération de 5 illustrations</span>`;
+      document.getElementById('bdProgressBar').style.width = '20%';
+      document.getElementById('bdProgressText').textContent = 'Histoire créée ! Génération des images...';
+
+      // Générer les images via Pollinations.ai
+      const pages = [
+        { description_image: histoire.couverture.description_image, titre_page: 'Couverture', isCover: true },
+        ...histoire.pages
+      ];
+
+      const imageUrls = [];
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
+        const progress = 20 + Math.round((i / pages.length) * 70);
+        document.getElementById('bdProgressBar').style.width = progress + '%';
+        document.getElementById('bdProgressText').textContent = `${i + 1} / ${pages.length} images générées`;
+        document.getElementById('bdLoadingText').innerHTML = `🎨 Génération image ${i + 1}/${pages.length}...<br/><span style="font-size:0.85rem; color:#aaa;">${page.titre_page || 'Page ' + i}</span>`;
+
+        const imgUrl = await genererImagePollinations(page.description_image, i === 0);
+        imageUrls.push(imgUrl);
+      }
+
+      // Afficher les images
+      bdGeneratedUrls = imageUrls;
+      document.getElementById('bdProgressBar').style.width = '100%';
+      document.getElementById('bdProgressText').textContent = `${pages.length} / ${pages.length} images générées`;
+      document.getElementById('bdLoading').style.display = 'none';
+      document.getElementById('bdImages').style.display = 'block';
+
+      const container = document.getElementById('bdImagesContainer');
+      container.innerHTML = '';
+      imageUrls.forEach((url, idx) => {
+        const label = idx === 0 ? 'Couverture' : `Page ${idx}`;
+        const div = document.createElement('div');
+        div.style.cssText = 'display:inline-block; margin:8px; text-align:center; vertical-align:top;';
+        div.innerHTML = `
+          <p style="color:#ffd700; font-size:0.8rem; margin-bottom:4px; font-weight:600;">${label}</p>
+          <img src="${url}" style="width:140px; border-radius:10px; border:2px solid rgba(255,215,0,0.3);" onerror="this.src='data:image/svg+xml,...'" />
+        `;
+        container.appendChild(div);
+      });
+
+      // Sauvegarder dans l'historique
+      sauvegarderHistorique({
+        prompt: histoire.titre,
+        titre: histoire.titre,
+        qualite: selectedQuality,
+        images: imageUrls,
+        plateforme: selectedSocial,
+        username: profil.nom
+      });
+
+    } catch(err) {
+      document.getElementById('bdLoading').style.display = 'none';
+      alert('❌ Erreur : ' + err.message);
+      console.error(err);
+    } finally {
+      btnSocial.disabled = false;
+      btnSocial.textContent = '🚀 Générer';
     }
   }
 
