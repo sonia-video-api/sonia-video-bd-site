@@ -665,22 +665,33 @@
       // ÉTAPE 2 : Générer les 5 images via Pollinations.ai (gratuit, côté client)
       const genererImagePollinations = async (promptImg, seed) => {
         const promptEncode = encodeURIComponent(promptImg + ', professional comic book illustration, vibrant colors, clean ink lines, detailed artwork, Marvel DC Comics quality');
-        const url = `https://image.pollinations.ai/prompt/${promptEncode}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}&enhance=true`;
-        // Précharger l'image pour vérifier qu'elle est valide
-        return new Promise((resolve, reject) => {
+        const pollinationsUrl = `https://image.pollinations.ai/prompt/${promptEncode}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}&enhance=true`;
+        
+        // Essayer Pollinations.ai avec un timeout de 45s
+        const testImage = (url) => new Promise((resolve) => {
           const img = new Image();
-          img.onload = () => resolve(url);
-          img.onerror = () => {
-            // Fallback avec DALL-E 3 via proxy si Pollinations échoue
-            fetch(PROXY_URL + endpoint, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ prompt: promptImg })
-            }).then(r => r.json()).then(d => resolve(d.images[0])).catch(reject);
-          };
+          const timer = setTimeout(() => { img.src = ''; resolve(null); }, 45000);
+          img.onload = () => { clearTimeout(timer); resolve(url); };
+          img.onerror = () => { clearTimeout(timer); resolve(null); };
           img.src = url;
-          setTimeout(() => img.onerror(), 30000); // timeout 30s
         });
+        
+        const result = await testImage(pollinationsUrl);
+        if (result) return result;
+        
+        // Fallback : DALL-E 3 via proxy
+        try {
+          const res = await fetch(PROXY_URL + endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: promptImg })
+          });
+          const data = await res.json();
+          if (data && data.images && data.images[0]) return data.images[0];
+        } catch(e) {}
+        
+        // Fallback final : image placeholder
+        return `https://placehold.co/1024x1024/1a1a2e/ffd700?text=Page+${seed % 10 + 1}`;
       };
 
       for (let i = 0; i < prompts.length; i++) {
