@@ -150,6 +150,15 @@
             <input type="file" accept="image/*" style="display:none" id="imgUpload" />
           </div>
         </div>
+        <!-- Option recherche Internet -->
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap; justify-content:center;">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; color:#ffd700; font-size:0.95rem;">
+            <input type="checkbox" id="rechercherWeb" style="width:18px; height:18px; cursor:pointer; accent-color:#ffd700;" />
+            <span>🌐 Enrichir avec des infos Internet (actualités, tendances)</span>
+          </label>
+          <button onclick="testerRechercheWeb()" style="background:rgba(255,215,0,0.15); border:1px solid #ffd700; color:#ffd700; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:0.85rem;">🔍 Tester la recherche</button>
+        </div>
+        <div id="webSearchResult" style="display:none; background:rgba(0,0,0,0.4); border:1px solid #ffd700; border-radius:12px; padding:12px; margin-bottom:12px; max-width:600px; margin-left:auto; margin-right:auto; text-align:left; font-size:0.85rem; color:#ddd;"></div>
         <button class="btn-create-video" id="btnCreer" onclick="genererBD()">📖 CRÉER MA BD</button>
 
         <!-- Résultat génération BD -->
@@ -546,6 +555,33 @@
   // Stockage des URLs générées
   let bdGeneratedUrls = [];
 
+  // Fonction pour tester la recherche web
+  async function testerRechercheWeb() {
+    const prompt = document.getElementById('videoPrompt').value.trim();
+    if (!prompt) {
+      alert('Entrez d\'abord votre idée de BD !');
+      return;
+    }
+    const resultDiv = document.getElementById('webSearchResult');
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = '<span style="color:#ffd700">🌐 Recherche en cours...</span>';
+    try {
+      const res = await fetch(PROXY_URL + '/api/recherche-web', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: prompt })
+      });
+      const data = await res.json();
+      let html = '<strong style="color:#ffd700">🌐 Infos trouvées sur Internet :</strong><br/>';
+      if (data.actualites) html += '<strong>Actualités :</strong> ' + data.actualites.replace(/\|/g, '<br/>• ') + '<br/>';
+      if (data.infos) html += '<strong>Infos :</strong> ' + data.infos.substring(0, 300) + '...';
+      if (!data.actualites && !data.infos) html += '<em>Aucune info trouvée - l\'IA utilisera son imagination</em>';
+      resultDiv.innerHTML = html;
+    } catch(e) {
+      resultDiv.innerHTML = '<span style="color:#ff6b6b">Erreur de recherche : ' + e.message + '</span>';
+    }
+  }
+
   async function genererBD() {
     const prompt = document.getElementById('videoPrompt').value.trim();
     if (!prompt) {
@@ -581,10 +617,15 @@
       document.getElementById('bdProgressBar').style.width = '5%';
       document.getElementById('bdProgressText').textContent = 'Création de l\'histoire...';
 
+      const rechercherWebActif = document.getElementById('rechercherWeb').checked;
+      if (rechercherWebActif) {
+        document.getElementById('bdLoadingText').innerHTML = '🌐 <strong style="color:#ffd700">Recherche d\'infos sur Internet...</strong><br/><span style="font-size:0.85rem; color:#aaa;">Actualités, tendances, informations réelles...</span>';
+      }
+
       const histRes = await fetch(PROXY_URL + '/api/histoire', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phrase: prompt })
+        body: JSON.stringify({ phrase: prompt, rechercherWeb: rechercherWebActif })
       });
       const histData = await histRes.json();
       if (!histRes.ok) throw new Error(histData.error || 'Erreur génération histoire');
