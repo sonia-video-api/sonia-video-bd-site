@@ -405,7 +405,7 @@
           <div class="pack-calcul">
             <p>🧲 4,99 € ÷ 5 vidéos = <strong>0,99 € / vidéo</strong></p>
           </div>
-          <button class="btn-pack starter-btn" onclick="alert('Paiement bientôt disponible !')">🛒 Acheter</button>
+          <button class="btn-pack starter-btn" onclick="acheterPack('starter')">🛒 Acheter</button>
         </div>
 
         <!-- Pack Standard -->
@@ -423,7 +423,7 @@
           <div class="pack-calcul">
             <p>🧲 8,99 € ÷ 10 vidéos = <strong>0,89 € / vidéo</strong></p>
           </div>
-          <button class="btn-pack populaire-btn" onclick="alert('Paiement bientôt disponible !')">🛒 Acheter</button>
+          <button class="btn-pack populaire-btn" onclick="acheterPack('standard')">🛒 Acheter</button>
         </div>
 
         <!-- Pack Pro -->
@@ -443,7 +443,7 @@
           <div class="pack-calcul">
             <p>🧲 19,99 € ÷ 20 vidéos = <strong>0,79 € / vidéo</strong></p>
           </div>
-          <button class="btn-pack pro-btn" onclick="alert('Paiement bientôt disponible !')">🛒 Acheter</button>
+          <button class="btn-pack pro-btn" onclick="acheterPack('pro')">🛒 Acheter</button>
         </div>
 
         <!-- Pack Business -->
@@ -462,7 +462,7 @@
           <div class="pack-calcul">
             <p>🧲 34,99 € ÷ 40 vidéos = <strong>0,69 € / vidéo</strong></p>
           </div>
-          <button class="btn-pack mini-btn" onclick="alert('Paiement bientôt disponible !')">🛒 Acheter</button>
+          <button class="btn-pack mini-btn" onclick="acheterPack('business')">🛒 Acheter</button>
         </div>
 
       </div>
@@ -1584,6 +1584,118 @@
       <a href="#historique" style="color:#aaa; text-decoration:none; font-size:0.9rem;">📚 Historique</a>
     </nav>
   `);
+
+  // ============================================================
+  // === STRIPE PAIEMENTS ===
+  // ============================================================
+
+  async function acheterPack(pack) {
+    const btn = event.target;
+    const texteOriginal = btn.innerHTML;
+    btn.innerHTML = '⏳ Redirection...';
+    btn.disabled = true;
+
+    try {
+      // Récupérer l'email de l'utilisateur connecté si disponible
+      const userData = JSON.parse(localStorage.getItem('sonia_user') || '{}');
+      const email = userData.email || null;
+
+      const res = await fetch(PROXY_URL + '/api/stripe/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pack, email })
+      });
+
+      const data = await res.json();
+
+      if (data.url) {
+        // Rediriger vers la page de paiement Stripe
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || 'Erreur de paiement');
+      }
+    } catch (err) {
+      console.error('Erreur paiement:', err);
+      alert('❌ Erreur : ' + err.message + '\n\nVérifiez votre connexion et réessayez.');
+      btn.innerHTML = texteOriginal;
+      btn.disabled = false;
+    }
+  }
+
+  // Gérer le retour après paiement Stripe
+  async function gererRetourPaiement() {
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get('payment');
+    const sessionId = params.get('session_id');
+    const pack = params.get('pack');
+
+    if (payment === 'success' && sessionId) {
+      // Vérifier le paiement côté serveur
+      try {
+        const res = await fetch(PROXY_URL + '/api/stripe/verify-payment/' + sessionId);
+        const data = await res.json();
+
+        if (data.success) {
+          // Ajouter les crédits au compte local
+          const creditsActuels = parseInt(localStorage.getItem('sonia_credits') || '0');
+          const nouveauxCredits = creditsActuels + data.bds;
+          localStorage.setItem('sonia_credits', nouveauxCredits.toString());
+          localStorage.setItem('sonia_pack_actif', data.pack);
+
+          // Afficher message de succès
+          afficherNotificationPaiement('success', data.pack, data.bds, nouveauxCredits);
+        } else {
+          afficherNotificationPaiement('pending', pack, 0, 0);
+        }
+      } catch (err) {
+        console.error('Erreur vérification:', err);
+      }
+      // Nettoyer l'URL
+      window.history.replaceState({}, '', window.location.pathname);
+
+    } else if (payment === 'cancelled') {
+      afficherNotificationPaiement('cancelled', '', 0, 0);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }
+
+  function afficherNotificationPaiement(type, pack, bds, totalCredits) {
+    const packNoms = { starter: 'Starter', standard: 'Standard', pro: 'Pro', business: 'Business' };
+    let html = '';
+
+    if (type === 'success') {
+      html = `
+        <div style="position:fixed; top:20px; right:20px; z-index:9999; background:linear-gradient(135deg,#00c851,#007e33); color:#fff; padding:24px 32px; border-radius:16px; box-shadow:0 8px 32px rgba(0,200,81,0.4); max-width:380px; font-family:Arial,sans-serif; animation:slideIn 0.5s ease;">
+          <div style="font-size:2.5rem; text-align:center; margin-bottom:8px">🎉</div>
+          <h3 style="margin:0 0 8px; font-size:1.2rem;">Paiement réussi !</h3>
+          <p style="margin:0 0 4px; opacity:0.9;">Pack <strong>${packNoms[pack] || pack}</strong> activé</p>
+          <p style="margin:0 0 12px; opacity:0.9;"><strong>+${bds} crédits</strong> ajoutés → Total : <strong>${totalCredits} crédits</strong></p>
+          <p style="margin:0; font-size:0.85rem; opacity:0.8;">Vous pouvez maintenant créer vos BD vidéos !</p>
+          <button onclick="this.parentElement.remove()" style="position:absolute; top:10px; right:12px; background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;">×</button>
+        </div>
+      `;
+    } else if (type === 'cancelled') {
+      html = `
+        <div style="position:fixed; top:20px; right:20px; z-index:9999; background:linear-gradient(135deg,#ff6b6b,#c0392b); color:#fff; padding:24px 32px; border-radius:16px; box-shadow:0 8px 32px rgba(255,107,107,0.4); max-width:380px; font-family:Arial,sans-serif;">
+          <div style="font-size:2.5rem; text-align:center; margin-bottom:8px">🚫</div>
+          <h3 style="margin:0 0 8px; font-size:1.2rem;">Paiement annulé</h3>
+          <p style="margin:0; opacity:0.9;">Votre paiement a été annulé. Aucun montant n'a été débité.</p>
+          <button onclick="this.parentElement.remove()" style="position:absolute; top:10px; right:12px; background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;">×</button>
+        </div>
+      `;
+    }
+
+    if (html) {
+      document.body.insertAdjacentHTML('beforeend', html);
+      setTimeout(() => {
+        const notif = document.querySelector('[style*="position:fixed"]');
+        if (notif) notif.remove();
+      }, 8000);
+    }
+  }
+
+  // Lancer la vérification au chargement de la page
+  window.addEventListener('load', gererRetourPaiement);
 
   </script>
 </body>
