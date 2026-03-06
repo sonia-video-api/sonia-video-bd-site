@@ -498,6 +498,19 @@
     </div>
   </section>
 
+  <!-- ===== HISTORIQUE ===== -->
+  <section id="historique" style="padding:60px 20px; background:linear-gradient(180deg,#0d0d2b 0%,#0a0a1a 100%); text-align:center;">
+    <div style="max-width:1000px; margin:0 auto;">
+      <h2 style="color:#ffd700; font-size:2rem; font-weight:900; margin-bottom:8px;">📚 Votre Historique</h2>
+      <p style="color:#aaa; font-size:1rem; margin-bottom:30px;">Toutes vos BD et vidéos générées sur cet appareil</p>
+      <div id="historiqueVide" style="color:#666; font-style:italic; padding:40px;">Aucune création pour l'instant. Générez votre première BD !</div>
+      <div id="historiqueGrid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:20px; text-align:left;"></div>
+      <div id="historiqueBtnVider" style="display:none; margin-top:24px;">
+        <button onclick="viderHistorique()" style="background:rgba(255,100,100,0.15); border:1px solid rgba(255,100,100,0.4); color:#ff6b6b; padding:10px 24px; border-radius:20px; cursor:pointer; font-size:0.9rem;">🗑 Vider l'historique</button>
+      </div>
+    </div>
+  </section>
+
   <!-- ===== FOOTER ===== -->
   <footer class="footer">
     <div class="footer-content">
@@ -750,6 +763,17 @@
 
       bdLoading.style.display = 'none';
       bdImages.style.display = 'block';
+
+      // Sauvegarder dans l'historique
+      sauvegarderHistorique({
+        type: 'BD',
+        titre: histoire ? histoire.titre : prompt,
+        prompt: prompt,
+        date: new Date().toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}),
+        images: bdGeneratedUrls,
+        qualite: selectedQuality
+      });
+      afficherHistorique();
 
     } catch (err) {
       bdLoading.style.display = 'none';
@@ -1183,6 +1207,93 @@
 
   // Lancer la vérification au chargement
   checkLoginStatus();
+
+  // ===== HISTORIQUE =====
+  function sauvegarderHistorique(item) {
+    try {
+      const historique = JSON.parse(localStorage.getItem('sonia_historique') || '[]');
+      historique.unshift(item); // Ajouter en tête
+      // Garder max 20 entrées
+      if (historique.length > 20) historique.splice(20);
+      localStorage.setItem('sonia_historique', JSON.stringify(historique));
+    } catch(e) { console.error('Erreur sauvegarde historique:', e); }
+  }
+
+  function afficherHistorique() {
+    try {
+      const historique = JSON.parse(localStorage.getItem('sonia_historique') || '[]');
+      const grid = document.getElementById('historiqueGrid');
+      const vide = document.getElementById('historiqueVide');
+      const btnVider = document.getElementById('historiqueBtnVider');
+
+      if (historique.length === 0) {
+        vide.style.display = 'block';
+        grid.innerHTML = '';
+        btnVider.style.display = 'none';
+        return;
+      }
+
+      vide.style.display = 'none';
+      btnVider.style.display = 'block';
+      grid.innerHTML = '';
+
+      historique.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.style.cssText = 'background:rgba(255,255,255,0.05); border:1px solid rgba(255,215,0,0.2); border-radius:16px; padding:16px; cursor:pointer; transition:all 0.2s;';
+        card.onmouseenter = () => card.style.borderColor = 'rgba(255,215,0,0.6)';
+        card.onmouseleave = () => card.style.borderColor = 'rgba(255,215,0,0.2)';
+
+        const imgSrc = item.images && item.images[0] ? item.images[0] : '';
+        const badgeColor = item.qualite === 'hd' ? '#ffd700' : '#4a90d9';
+        const badgeLabel = item.qualite === 'hd' ? 'HD' : 'Standard';
+
+        card.innerHTML = `
+          <div style="position:relative; margin-bottom:12px;">
+            ${imgSrc ? `<img src="${imgSrc}" style="width:100%; border-radius:10px; aspect-ratio:1; object-fit:cover;" onerror="this.style.display='none'" />` : '<div style="width:100%; aspect-ratio:1; background:rgba(255,215,0,0.1); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:2rem;">📚</div>'}
+            <span style="position:absolute; top:8px; right:8px; background:${badgeColor}; color:#000; padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:700;">${badgeLabel}</span>
+          </div>
+          <p style="color:#ffd700; font-weight:700; font-size:0.95rem; margin:0 0 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.titre || item.prompt}</p>
+          <p style="color:#888; font-size:0.78rem; margin:0 0 10px;">📅 ${item.date}</p>
+          <p style="color:#aaa; font-size:0.8rem; margin:0 0 12px; font-style:italic; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.prompt}</p>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${item.images && item.images.length > 0 ? `<a href="${item.images[0]}" target="_blank" style="background:rgba(255,215,0,0.15); border:1px solid #ffd700; color:#ffd700; padding:6px 14px; border-radius:20px; font-size:0.8rem; text-decoration:none; font-weight:600;">👁 Voir</a>` : ''}
+            ${item.videoUrl ? `<a href="${item.videoUrl}" download="sonia-video.mp4" style="background:rgba(230,57,70,0.2); border:1px solid #e63946; color:#e63946; padding:6px 14px; border-radius:20px; font-size:0.8rem; text-decoration:none; font-weight:600;">▶ Vidéo</a>` : ''}
+            <button onclick="supprimerHistorique(${idx})" style="background:rgba(255,100,100,0.1); border:1px solid rgba(255,100,100,0.3); color:#ff6b6b; padding:6px 12px; border-radius:20px; font-size:0.8rem; cursor:pointer;">🗑</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    } catch(e) { console.error('Erreur affichage historique:', e); }
+  }
+
+  function supprimerHistorique(idx) {
+    try {
+      const historique = JSON.parse(localStorage.getItem('sonia_historique') || '[]');
+      historique.splice(idx, 1);
+      localStorage.setItem('sonia_historique', JSON.stringify(historique));
+      afficherHistorique();
+    } catch(e) {}
+  }
+
+  function viderHistorique() {
+    if (confirm('Vider tout l\'historique ?')) {
+      localStorage.removeItem('sonia_historique');
+      afficherHistorique();
+    }
+  }
+
+  // Afficher l'historique au chargement
+  afficherHistorique();
+
+  // Ajouter lien Historique dans la navbar
+  document.querySelector('.nav-logo').insertAdjacentHTML('afterend', `
+    <nav style="display:flex; gap:20px; align-items:center;">
+      <a href="#create" style="color:#ffd700; text-decoration:none; font-size:0.9rem; font-weight:600;">Créer</a>
+      <a href="#tarifs" style="color:#aaa; text-decoration:none; font-size:0.9rem;">Tarifs</a>
+      <a href="#historique" style="color:#aaa; text-decoration:none; font-size:0.9rem;">📚 Historique</a>
+    </nav>
+  `);
+
   </script>
 </body>
 </html>
