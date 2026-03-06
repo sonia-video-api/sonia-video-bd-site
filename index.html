@@ -662,22 +662,35 @@
 
       const labels = ['Couverture', 'Page 1', 'Page 2', 'Page 3', 'Page 4'];
 
-      // ÉTAPE 2 : Générer les 5 images
+      // ÉTAPE 2 : Générer les 5 images via Pollinations.ai (gratuit, côté client)
+      const genererImagePollinations = async (promptImg, seed) => {
+        const promptEncode = encodeURIComponent(promptImg + ', professional comic book illustration, vibrant colors, clean ink lines, detailed artwork, Marvel DC Comics quality');
+        const url = `https://image.pollinations.ai/prompt/${promptEncode}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}&enhance=true`;
+        // Précharger l'image pour vérifier qu'elle est valide
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(url);
+          img.onerror = () => {
+            // Fallback avec DALL-E 3 via proxy si Pollinations échoue
+            fetch(PROXY_URL + endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ prompt: promptImg })
+            }).then(r => r.json()).then(d => resolve(d.images[0])).catch(reject);
+          };
+          img.src = url;
+          setTimeout(() => img.onerror(), 30000); // timeout 30s
+        });
+      };
+
       for (let i = 0; i < prompts.length; i++) {
         const pct = 15 + Math.round((i / prompts.length) * 85);
         document.getElementById('bdProgressBar').style.width = pct + '%';
         document.getElementById('bdProgressText').textContent = `Image ${i + 1} / 5 générée`;
-        document.getElementById('bdLoadingText').innerHTML = `🎨 Génération : <strong style="color:#ffd700">${labels[i]}</strong>...<br/><span style="font-size:0.85rem; color:#aaa;">Environ ${(5-i)*25} secondes restantes</span>`;
+        document.getElementById('bdLoadingText').innerHTML = `🎨 Génération : <strong style="color:#ffd700">${labels[i]}</strong>...<br/><span style="font-size:0.85rem; color:#aaa;">Environ ${(5-i)*10} secondes restantes</span>`;
 
-        const res = await fetch(PROXY_URL + endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: prompts[i] })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || `Erreur image ${labels[i]}`);
-
-        const url = data.images[0];
+        const seed = Math.floor(Math.random() * 999999);
+        const url = await genererImagePollinations(prompts[i], seed + i);
         bdGeneratedUrls.push(url);
 
         const img = document.createElement('img');
