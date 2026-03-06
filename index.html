@@ -309,9 +309,11 @@
 
       <!-- Boutons action -->
       <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
-        <button onclick="jouerVoix()" style="background:linear-gradient(135deg,#e63946,#c1121f); color:#fff; border:none; padding:14px 32px; border-radius:30px; font-size:1rem; font-weight:700; cursor:pointer; box-shadow:0 4px 15px rgba(230,57,70,0.4);">▶ ÉCOUTER</button>
-        <button onclick="stopVoix()" style="background:#333; color:#fff; border:none; padding:14px 24px; border-radius:30px; font-size:1rem; cursor:pointer;">⏹ STOP</button>
+        <button onclick="jouerVoixIA()" style="background:linear-gradient(135deg,#ffd700,#ff9500); color:#000; border:none; padding:14px 32px; border-radius:30px; font-size:1rem; font-weight:800; cursor:pointer; box-shadow:0 4px 15px rgba(255,215,0,0.5);">🤖 VOIX IA (OpenAI)</button>
+        <button onclick="jouerVoix()" style="background:linear-gradient(135deg,#e63946,#c1121f); color:#fff; border:none; padding:14px 24px; border-radius:30px; font-size:0.9rem; font-weight:700; cursor:pointer;">🔊 Voix navigateur</button>
+        <button onclick="stopVoix()" style="background:#333; color:#fff; border:none; padding:14px 20px; border-radius:30px; font-size:0.9rem; cursor:pointer;">⏹ STOP</button>
       </div>
+      <div id="voixIAStatus" style="color:#aaa; font-size:0.82rem; margin-top:8px; min-height:20px;"></div>
 
       <!-- Voix sélectionnée -->
       <p id="voixSelectee" style="color:#ffd700; margin-top:16px; font-size:0.9rem;">Aucune voix sélectionnée — cliquez sur un nom ci-dessus</p>
@@ -884,7 +886,7 @@
 
   async function genererVideoComplete() {
     if (!histoireGeneree) {
-      alert('Veuillez d’abord créer votre BD !');
+      alert('Veuillez d\'abord créer votre BD !');
       return;
     }
     const voix = document.getElementById('voixVideoSelect').value;
@@ -904,7 +906,7 @@
 
     try {
       // ÉTAPE 1 : Récupérer les segments (images + audio) depuis le serveur
-      texte.textContent = '🎨 Génération des images BD via DALL-E 3...';
+      texte.textContent = '🎨 Génération des images BD et voix off...';
       const res = await fetch(PROXY_URL + '/api/generer-video', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -921,84 +923,10 @@
 
       if (!segments.length) throw new Error('Aucun segment reçu du serveur');
 
-      // ÉTAPE 2 : Charger FFmpeg.wasm
-      texte.textContent = '⏳ Chargement de l’assembleur vidéo (FFmpeg.wasm)...';
-      let ff;
-      try {
-        ff = await initFFmpeg();
-      } catch(ffErr) {
-        // Fallback si FFmpeg.wasm ne charge pas : proposer téléchargement images
-        console.warn('FFmpeg.wasm non disponible:', ffErr);
-        loading.style.display = 'none';
-        result.style.display = 'block';
-        // Mettre à jour les images générées avec les nouvelles
-        bdGeneratedUrls = segments.map(s => s.image);
-        result.innerHTML = `
-          <p style="color:#ffd700; font-weight:700; margin-bottom:8px;">✅ Images générées avec succès !</p>
-          <p style="color:#aaa; font-size:0.82rem; margin-bottom:12px;">L’assemblage vidéo nécessite un navigateur compatible WebAssembly.<br>Téléchargez les images pour les utiliser.</p>
-          <button onclick="telechargerToutes()" style="background:#ffd700; color:#000; padding:12px 28px; border-radius:30px; font-weight:700; border:none; cursor:pointer;">⬇ Télécharger toutes les images</button>
-        `;
-        return;
-      }
+      texte.textContent = '🎥 Assemblage de la vidéo avec voix off...';
 
-      // ÉTAPE 3 : Assembler la vidéo avec FFmpeg.wasm
-      texte.textContent = '🎥 Assemblage de la vidéo MP4...';
-
-      // FFmpegUtil exporte fetchFile
-      const FFmpegUtilLib = window.FFmpegUtil || window['@ffmpeg/util'];
-      const segmentFiles = [];
-
-      for (let i = 0; i < segments.length; i++) {
-        const seg = segments[i];
-        texte.textContent = `🖼️ Traitement image ${i + 1}/${segments.length}...`;
-
-        // Écrire l'image dans le FS virtuel de FFmpeg
-        const imgData = base64ToUint8Array(seg.image);
-        await ff.writeFile(`img_${i}.png`, imgData);
-
-        if (seg.audio) {
-          // Avec audio : créer un segment vidéo avec la durée de l'audio
-          const audioData = base64ToUint8Array(seg.audio);
-          await ff.writeFile(`audio_${i}.mp3`, audioData);
-
-          await ff.exec([
-            '-loop', '1', '-i', `img_${i}.png`,
-            '-i', `audio_${i}.mp3`,
-            '-c:v', 'libx264', '-tune', 'stillimage',
-            '-c:a', 'aac', '-b:a', '128k',
-            '-pix_fmt', 'yuv420p',
-            '-vf', 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2',
-            '-shortest',
-            `seg_${i}.mp4`, '-y'
-          ]);
-        } else {
-          // Sans audio : 5 secondes par image
-          await ff.exec([
-            '-loop', '1', '-i', `img_${i}.png`,
-            '-c:v', 'libx264', '-t', '5',
-            '-pix_fmt', 'yuv420p',
-            '-vf', 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2',
-            `seg_${i}.mp4`, '-y'
-          ]);
-        }
-        segmentFiles.push(`seg_${i}.mp4`);
-      }
-
-      // Concaténer tous les segments
-      texte.textContent = '🔗 Concaténation des segments...';
-      const listContent = segmentFiles.map(f => `file '${f}'`).join('\n');
-      await ff.writeFile('list.txt', listContent);
-
-      await ff.exec([
-        '-f', 'concat', '-safe', '0',
-        '-i', 'list.txt',
-        '-c', 'copy',
-        'video_final.mp4', '-y'
-      ]);
-
-      // Lire la vidéo finale
-      const videoData = await ff.readFile('video_final.mp4');
-      const videoBlob = new Blob([videoData.buffer], { type: 'video/mp4' });
+      // ÉTAPE 2 : Assembler la vidéo avec MediaRecorder + Canvas (sans FFmpeg)
+      const videoBlob = await assemblerVideoMediaRecorder(segments, texte);
       const videoUrl = URL.createObjectURL(videoBlob);
 
       // Afficher le résultat
@@ -1006,12 +934,13 @@
       result.style.display = 'block';
       result.innerHTML = `
         <p style="color:#00cc44; font-weight:800; font-size:1.1rem; margin-bottom:12px;">✅ Vidéo BD prête !</p>
-        <video controls style="width:100%; max-width:320px; border-radius:12px; margin-bottom:12px; border:2px solid #ffd700;">
+        <video controls style="width:100%; max-width:360px; border-radius:12px; margin-bottom:12px; border:2px solid #ffd700;">
+          <source src="${videoUrl}" type="video/webm">
           <source src="${videoUrl}" type="video/mp4">
         </video><br>
-        <a href="${videoUrl}" download="sonia-video-bd-${Date.now()}.mp4"
-           style="display:inline-block; background:linear-gradient(135deg,#00cc44,#009933); color:#fff; padding:14px 32px; border-radius:30px; font-weight:800; text-decoration:none; font-size:1rem; box-shadow:0 4px 20px rgba(0,204,68,0.4);">
-          ⬇ Télécharger la vidéo MP4
+        <a href="${videoUrl}" download="sonia-video-bd-${Date.now()}.webm"
+           style="display:inline-block; background:linear-gradient(135deg,#00cc44,#009933); color:#fff; padding:14px 32px; border-radius:30px; font-weight:800; text-decoration:none; font-size:1rem; box-shadow:0 4px 20px rgba(0,204,68,0.4); margin-bottom:8px;">
+          ⬇ Télécharger la vidéo
         </a>
       `;
 
@@ -1024,6 +953,140 @@
       btnVideo.disabled = false;
       btnVideo.textContent = '🎥 GÉNÉRER LA VIDÉO COMPLÈTE';
     }
+  }
+
+  // Assembler vidéo avec MediaRecorder + Canvas (sans FFmpeg.wasm)
+  async function assemblerVideoMediaRecorder(segments, texteEl) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // Créer un canvas 1080x1920 (format TikTok/Reels)
+        const canvas = document.createElement('canvas');
+        canvas.width = 1080;
+        canvas.height = 1920;
+        const ctx = canvas.getContext('2d');
+
+        // Créer AudioContext pour mixer la voix off
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const audioChunks = [];
+
+        // Démarrer MediaRecorder sur le canvas
+        const stream = canvas.captureStream(30); // 30 fps
+        const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') 
+          ? 'video/webm;codecs=vp9,opus' 
+          : MediaRecorder.isTypeSupported('video/webm') 
+            ? 'video/webm' 
+            : 'video/mp4';
+
+        const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 2500000 });
+        const chunks = [];
+        recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+        recorder.onstop = () => {
+          const blob = new Blob(chunks, { type: mimeType });
+          resolve(blob);
+        };
+
+        recorder.start(100); // Collecter des données toutes les 100ms
+
+        // Traiter chaque segment
+        for (let i = 0; i < segments.length; i++) {
+          const seg = segments[i];
+          if (texteEl) texteEl.textContent = `🎬 Assemblage segment ${i+1}/${segments.length}...`;
+
+          // Charger l'image
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          await new Promise((res, rej) => {
+            img.onload = res;
+            img.onerror = () => res(); // Continuer même si erreur
+            // L'image peut être une URL ou base64
+            if (seg.image && seg.image.startsWith('http')) {
+              img.src = seg.image;
+            } else if (seg.image) {
+              img.src = 'data:image/png;base64,' + seg.image;
+            } else {
+              res();
+            }
+          });
+
+          // Durée du segment
+          let duree = seg.duree || 5; // secondes
+
+          // Jouer l'audio si disponible
+          if (seg.audio) {
+            try {
+              // Décoder l'audio base64
+              const audioBase64 = seg.audio.replace('data:audio/mp3;base64,', '').replace('data:audio/mpeg;base64,', '');
+              const binaryStr = atob(audioBase64);
+              const bytes = new Uint8Array(binaryStr.length);
+              for (let j = 0; j < binaryStr.length; j++) bytes[j] = binaryStr.charCodeAt(j);
+              const audioBuffer = await audioCtx.decodeAudioData(bytes.buffer);
+              duree = audioBuffer.duration + 0.3; // Durée réelle de l'audio + 0.3s de marge
+
+              // Connecter l'audio au stream vidéo
+              const source = audioCtx.createBufferSource();
+              source.buffer = audioBuffer;
+              const dest = audioCtx.createMediaStreamDestination();
+              source.connect(dest);
+              source.connect(audioCtx.destination); // Aussi pour l'écoute en direct
+
+              // Ajouter la piste audio au stream vidéo
+              const audioTrack = dest.stream.getAudioTracks()[0];
+              if (audioTrack && stream.getAudioTracks().length === 0) {
+                stream.addTrack(audioTrack);
+              }
+              source.start();
+            } catch(audioErr) {
+              console.warn('Erreur audio segment', i, audioErr);
+            }
+          }
+
+          // Dessiner l'image sur le canvas pendant la durée
+          const startTime = Date.now();
+          const dureMs = duree * 1000;
+
+          while (Date.now() - startTime < dureMs) {
+            // Fond noir
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, 1080, 1920);
+
+            // Dessiner l'image centrée
+            if (img.complete && img.naturalWidth > 0) {
+              const ratio = Math.min(1080 / img.naturalWidth, 1920 / img.naturalHeight);
+              const w = img.naturalWidth * ratio;
+              const h = img.naturalHeight * ratio;
+              const x = (1080 - w) / 2;
+              const y = (1920 - h) / 2;
+              ctx.drawImage(img, x, y, w, h);
+            } else {
+              // Image non chargée : fond coloré avec texte
+              ctx.fillStyle = '#1a0a2e';
+              ctx.fillRect(0, 0, 1080, 1920);
+              ctx.fillStyle = '#ffd700';
+              ctx.font = 'bold 48px Arial';
+              ctx.textAlign = 'center';
+              ctx.fillText('🎬 Sonia Video BD', 540, 960);
+            }
+
+            // Numéro de page
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(0, 1820, 1080, 100);
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 36px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(i === 0 ? '📖 Couverture' : `📄 Page ${i}`, 540, 1875);
+
+            await new Promise(r => setTimeout(r, 33)); // ~30fps
+          }
+        }
+
+        // Fin de l'enregistrement
+        recorder.stop();
+        audioCtx.close();
+
+      } catch(err) {
+        reject(err);
+      }
+    });
   }
 
   // ===== MUSIQUES LIBRES DE DROITS (Jamendo API) =====
@@ -1178,6 +1241,63 @@
 
   function stopVoix() {
     window.speechSynthesis.cancel();
+    // Arrêter aussi l'audio IA si en cours
+    if (window._voixIAAudio) {
+      window._voixIAAudio.pause();
+      window._voixIAAudio = null;
+    }
+  }
+
+  // Voix IA via OpenAI TTS
+  async function jouerVoixIA() {
+    const texte = document.getElementById('voixTexte').value.trim();
+    if (!texte) {
+      alert('Veuillez écrire un texte à lire !');
+      return;
+    }
+    const status = document.getElementById('voixIAStatus');
+    status.textContent = '⏳ Génération de la voix IA...';
+    status.style.color = '#ffd700';
+
+    // Arrêter l'audio précédent
+    if (window._voixIAAudio) {
+      window._voixIAAudio.pause();
+      window._voixIAAudio = null;
+    }
+    window.speechSynthesis.cancel();
+
+    // Mapper le nom de voix français vers une voix OpenAI
+    const voixOpenAI = voixSelectionnee && voixSelectionnee.genre === 'm' ? 'onyx' : 'nova';
+
+    try {
+      const res = await fetch(PROXY_URL + '/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: texte, voice: voixOpenAI })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Erreur TTS');
+      }
+
+      const data = await res.json();
+      if (!data.audio) throw new Error('Pas d\'audio reçu');
+
+      // Jouer l'audio
+      const audioSrc = 'data:audio/mp3;base64,' + data.audio;
+      const audio = new Audio(audioSrc);
+      window._voixIAAudio = audio;
+      audio.onended = () => { status.textContent = '✅ Lecture terminée'; status.style.color = '#00cc44'; };
+      audio.onerror = () => { status.textContent = '❌ Erreur lecture audio'; status.style.color = '#ff4444'; };
+      await audio.play();
+      status.textContent = '🔊 Lecture en cours... (voix IA OpenAI)';
+      status.style.color = '#00cc44';
+    } catch(err) {
+      status.textContent = '❌ ' + err.message;
+      status.style.color = '#ff4444';
+      console.error('Erreur voix IA:', err);
+    }
   }
 
   // Charger les voix au démarrage
