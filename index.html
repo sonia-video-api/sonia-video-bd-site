@@ -557,6 +557,38 @@
   // ===== API PROXY =====
   const PROXY_URL = 'https://sonia-proxy.onrender.com';
 
+  // === FONCTION GLOBALE : Générer image via Pollinations.ai (gratuit, côté client) ===
+  const genererImagePollinations = async (promptImg, seed) => {
+    const promptEncode = encodeURIComponent(promptImg + ', professional comic book illustration, vibrant colors, clean ink lines, detailed artwork, Marvel DC Comics quality');
+    const pollinationsUrl = `https://image.pollinations.ai/prompt/${promptEncode}?width=1024&height=1024&model=flux&nologo=true&seed=${typeof seed === 'number' ? seed : Math.floor(Math.random()*999999)}&enhance=true`;
+    
+    // Essayer Pollinations.ai avec un timeout de 45s
+    const testImage = (url) => new Promise((resolve) => {
+      const img = new Image();
+      const timer = setTimeout(() => { img.src = ''; resolve(null); }, 45000);
+      img.onload = () => { clearTimeout(timer); resolve(url); };
+      img.onerror = () => { clearTimeout(timer); resolve(null); };
+      img.src = url;
+    });
+    
+    const result = await testImage(pollinationsUrl);
+    if (result) return result;
+    
+    // Fallback : DALL-E 3 via proxy
+    try {
+      const res = await fetch(PROXY_URL + '/api/generate/standard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: promptImg })
+      });
+      const data = await res.json();
+      if (data && data.images && data.images[0]) return data.images[0];
+    } catch(e) {}
+    
+    // Fallback final : image placeholder
+    return `https://placehold.co/1024x1024/1a1a2e/ffd700?text=Image+${typeof seed === 'number' ? seed % 10 + 1 : 1}`;
+  };
+
   // Qualité sélectionnée : 'standard' ou 'hd'
   let selectedQuality = 'standard';
 
