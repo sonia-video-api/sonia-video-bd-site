@@ -177,8 +177,8 @@
             <button onclick="genererBDSocial()" style="padding:10px 20px; border-radius:25px; background:linear-gradient(135deg,#ff0050,#ff4444); color:#fff; border:none; font-weight:700; cursor:pointer; font-size:0.9rem; white-space:nowrap;">🚀 Générer</button>
           </div>
           <div style="text-align:center; color:#aaa; font-size:0.9rem; margin:12px 0;">OU</div>
-          <div style="display:flex; gap:8px; justify-content:center;">
-            <button onclick="document.getElementById('socialImageUpload').click()" style="padding:10px 20px; border-radius:25px; background:rgba(255,215,0,0.15); border:2px solid #ffd700; color:#ffd700; font-weight:700; cursor:pointer; font-size:0.9rem; white-space:nowrap;">📸 Telecharger une image</button>
+          <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+            <button onclick="document.getElementById('socialImageUpload').click()" style="padding:12px 24px; border-radius:25px; background:linear-gradient(135deg,rgba(255,215,0,0.2),rgba(255,215,0,0.05)); border:2px solid #ffd700; color:#ffd700; font-weight:700; cursor:pointer; font-size:0.95rem; white-space:nowrap; transition:all 0.3s ease; box-shadow:0 0 15px rgba(255,215,0,0.2);">📸 Telecharger une image</button>
             <input type="file" accept="image/*" style="display:none" id="socialImageUpload" onchange="genererBDDepuisImage()" />
           </div>
           <div id="socialProfil" style="display:none; margin-top:12px; padding:10px; background:rgba(0,0,0,0.3); border-radius:10px; display:flex; align-items:center; gap:12px;">
