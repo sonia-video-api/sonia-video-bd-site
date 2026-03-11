@@ -144,10 +144,13 @@
         </div>
         <div class="create-form">
           <input type="text" class="create-input" id="videoPrompt" placeholder="Décris ton histoire...  (ex: Jacques et Linda, la thérapie par le rire)" />
-          <div class="create-image-add" onclick="document.getElementById('imgUpload').click()" style="cursor:pointer">
-            <span class="camera-icon">📷</span>
-            <strong>Ajouter une photo</strong> <span class="optional">(optionnel — pour personnaliser les personnages)</span>
-            <input type="file" accept="image/*" style="display:none" id="imgUpload" />
+          <div class="create-image-add" onclick="document.getElementById('imgUpload').click()" style="cursor:pointer; background:rgba(255,215,0,0.1); border:1px dashed #ffd700; padding:12px; border-radius:12px; display:flex; align-items:center; gap:10px; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,215,0,0.2)'" onmouseout="this.style.background='rgba(255,215,0,0.1)'">
+            <span class="camera-icon" style="font-size:1.5rem;">📸</span>
+            <div style="text-align:left;">
+              <strong style="color:#ffd700; display:block;">Ajouter une photo</strong>
+              <span class="optional" style="font-size:0.8rem; color:#aaa;">(optionnel — pour personnaliser les personnages)</span>
+            </div>
+            <input type="file" accept="image/*" style="display:none" id="imgUpload" onchange="genererBDDepuisImageGenerique(this)" />
           </div>
         </div>
         <!-- Option recherche Internet -->
@@ -1610,7 +1613,114 @@
     }
   }
 
-  // === FONCTION : Générer BD à partir d'une image téléchargée ===
+  // === FONCTION : Générer BD à partir d'une image téléchargée (Générique) ===
+  async function genererBDDepuisImageGenerique(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      const imageBase64 = e.target.result.split(',')[1];
+      
+      const btn = input.parentElement;
+      const originalContent = btn.innerHTML;
+      btn.style.pointerEvents = 'none';
+      btn.innerHTML = '⏳ <span style="color:#ffd700; font-weight:700;">Analyse de l\'image...</span>';
+
+      // Afficher le chargement BD
+      document.getElementById('bdResult').style.display = 'block';
+      document.getElementById('bdLoading').style.display = 'block';
+      document.getElementById('bdImages').style.display = 'none';
+      document.getElementById('bdLoadingText').innerHTML = `🖼️ Analyse de votre image...<br/><span style="font-size:0.85rem; color:#aaa;">Création d'une histoire basée sur l'image</span>`;
+      document.getElementById('bdProgressBar').style.width = '10%';
+      document.getElementById('bdProgressText').textContent = 'Analyse de l\'image...';
+
+      try {
+        const res = await fetch(PROXY_URL + '/api/generer-bd-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: imageBase64 })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Erreur analyse image');
+        }
+
+        const data = await res.json();
+        const histoire = data.histoire;
+
+        // Remplir le champ texte avec le titre de l'histoire
+        document.getElementById('videoPrompt').value = histoire.titre || 'BD créée à partir d\'une image';
+
+        // Sauvegarder l'histoire et générer les images
+        histoireGeneree = histoire;
+
+        document.getElementById('bdLoadingText').innerHTML = `🎨 Création des images BD...<br/><span style="font-size:0.85rem; color:#aaa;">Génération de 5 illustrations</span>`;
+        document.getElementById('bdProgressBar').style.width = '20%';
+        document.getElementById('bdProgressText').textContent = 'Histoire créée ! Génération des images...';
+
+        // Générer les images
+        const pages = [
+          { description_image: histoire.couverture.description_image, titre_page: 'Couverture', isCover: true },
+          ...histoire.pages
+        ];
+
+        const imageUrls = [];
+        for (let i = 0; i < pages.length; i++) {
+          const page = pages[i];
+          const progress = 20 + Math.round((i / pages.length) * 70);
+          document.getElementById('bdProgressBar').style.width = progress + '%';
+          document.getElementById('bdProgressText').textContent = `${i + 1} / ${pages.length} images générées`;
+          document.getElementById('bdLoadingText').innerHTML = `🎨 Génération image ${i + 1}/${pages.length}...<br/><span style="font-size:0.85rem; color:#aaa;">${page.titre_page || 'Page ' + i}</span>`;
+
+          const imgUrl = await genererImagePollinations(page.description_image, i === 0);
+          imageUrls.push(imgUrl);
+        }
+
+        // Afficher les images
+        bdGeneratedUrls = imageUrls;
+        document.getElementById('bdProgressBar').style.width = '100%';
+        document.getElementById('bdProgressText').textContent = `${pages.length} / ${pages.length} images générées`;
+        document.getElementById('bdLoading').style.display = 'none';
+        document.getElementById('bdImages').style.display = 'block';
+
+        const container = document.getElementById('bdImagesContainer');
+        container.innerHTML = '';
+        imageUrls.forEach((url, idx) => {
+          const label = idx === 0 ? 'Couverture' : `Page ${idx}`;
+          const div = document.createElement('div');
+          div.style.cssText = 'display:inline-block; margin:8px; text-align:center; vertical-align:top;';
+          div.innerHTML = `
+            <p style="color:#ffd700; font-size:0.8rem; margin-bottom:4px; font-weight:600;">${label}</p>
+            <img src="${url}" style="width:140px; border-radius:10px; border:2px solid rgba(255,215,0,0.3);" onerror="this.src='data:image/svg+xml,...'" />
+          `;
+          container.appendChild(div);
+        });
+
+        // Sauvegarder dans l'historique
+        sauvegarderHistorique({
+          prompt: histoire.titre,
+          titre: histoire.titre,
+          qualite: selectedQuality,
+          images: imageUrls,
+          source: 'image_upload'
+        });
+
+      } catch(err) {
+        document.getElementById('bdLoading').style.display = 'none';
+        alert('❌ Erreur : ' + err.message);
+        console.error(err);
+      } finally {
+        btn.style.pointerEvents = 'auto';
+        btn.innerHTML = originalContent;
+        input.value = '';
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // === FONCTION : Générer BD à partir d'une image téléchargée (Social) ===
   async function genererBDDepuisImage() {
     const fileInput = document.getElementById('socialImageUpload');
     const file = fileInput.files[0];
