@@ -684,6 +684,13 @@
     const bdCouverture = document.getElementById('bdCouverture');
     const bdPages = document.getElementById('bdPages');
 
+    // Vérifier que tous les éléments existent
+    if (!bdLoading || !bdImages || !bdError || !bdCouverture || !bdPages) {
+      console.error('Erreur : Conteneurs manquants', { bdLoading, bdImages, bdError, bdCouverture, bdPages });
+      alert('Erreur : Les conteneurs d\'affichage ne sont pas trouvés. Veuillez rafraîchir la page.');
+      return;
+    }
+
     btnCreer.disabled = true;
     btnCreer.textContent = '⏳ Création...';
     bdResult.style.display = 'block';
@@ -814,17 +821,23 @@
           coverWrap.appendChild(img);
           coverWrap.appendChild(titleBanner);
           coverWrap.appendChild(bottomBanner);
-          bdCouverture.appendChild(coverWrap);
-          document.getElementById('bdDownload').href = url;
+          if (bdCouverture) bdCouverture.appendChild(coverWrap);
+          const bdDownloadLink = document.getElementById('bdDownload');
+          if (bdDownloadLink) bdDownloadLink.href = url;
 
           // Afficher info histoire
           const infoDiv = document.createElement('div');
           infoDiv.style.cssText = 'margin-top:12px; padding:12px; background:rgba(255,215,0,0.08); border:1px solid rgba(255,215,0,0.2); border-radius:10px; text-align:left; max-width:320px; width:100%;';
-          infoDiv.innerHTML = `
-            <p style="color:#ffd700; font-weight:700; font-size:0.9rem; margin:0 0 4px;">🎭 Genre : ${histoire.genre || ''}</p>
-            <p style="color:#ccc; font-size:0.82rem; margin:0;">👥 ${histoire.personnages || ''}</p>
-          `;
-          bdCouverture.appendChild(infoDiv);
+          try {
+            infoDiv.innerHTML = `
+              <p style="color:#ffd700; font-weight:700; font-size:0.9rem; margin:0 0 4px;">🎭 Genre : ${histoire.genre || ''}</p>
+              <p style="color:#ccc; font-size:0.82rem; margin:0;">👥 ${histoire.personnages || ''}</p>
+            `;
+          } catch (e) {
+            console.warn('Erreur infoDiv innerHTML:', e);
+            infoDiv.textContent = 'Informations de l\'histoire';
+          }
+          if (bdCouverture) bdCouverture.appendChild(infoDiv);
 
         } else {
           // Pages avec narration et dialogue
@@ -851,7 +864,7 @@
             pageDiv.appendChild(textDiv);
           }
 
-          bdPages.appendChild(pageDiv);
+          if (bdPages) bdPages.appendChild(pageDiv);
         }
       }
 
