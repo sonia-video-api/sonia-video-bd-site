@@ -46,9 +46,19 @@
       </div>
       <p class="hero-sub">CRÉE TES <span class="highlight-yellow">VIDÉOS &amp; BANDES DESSINÉES</span></p>
       <p class="hero-cta-text">EN QUELQUES CLICS !</p>
+      
+      <!-- BOUTON PRIORITAIRE DE TÉLÉCHARGEMENT D'IMAGE -->
+      <button onclick="document.getElementById('heroImageUpload').click()" style="display:block; margin:20px auto; padding:18px 32px; border-radius:30px; background:linear-gradient(135deg,#ffd700,#ffed4e); border:4px solid #ffd700; color:#000; font-weight:700; cursor:pointer; font-size:1.1rem; text-transform:uppercase; letter-spacing:0.5px; box-shadow:0 0 40px rgba(255,215,0,0.7), 0 0 80px rgba(255,215,0,0.3); transition:all 0.3s ease; animation:pulse 2s infinite;" onmouseover="this.style.boxShadow='0 0 50px rgba(255,215,0,0.9), 0 0 100px rgba(255,215,0,0.5)'; this.style.transform='scale(1.05)';" onmouseout="this.style.boxShadow='0 0 40px rgba(255,215,0,0.7), 0 0 80px rgba(255,215,0,0.3)'; this.style.transform='scale(1)';">📸 TELECHARGER UNE IMAGE MAINTENANT</button>
+      <input type="file" accept="image/*" style="display:none" id="heroImageUpload" onchange="genererBDDepuisImage()" />
+      
+      <style>
+        @keyframes pulse {
+          0%, 100% { box-shadow: 0 0 40px rgba(255,215,0,0.7), 0 0 80px rgba(255,215,0,0.3); }
+          50% { box-shadow: 0 0 50px rgba(255,215,0,0.9), 0 0 100px rgba(255,215,0,0.5); }
+        }
+      </style>
 
-      <!-- 3 étapes -->
-      <div class="steps-row">
+      <!-- 3 étapes -->      <div class="steps-row">
         <!-- Étape gauche : Upload -->
         <div class="step-upload">
           <div class="phone-mockup">
