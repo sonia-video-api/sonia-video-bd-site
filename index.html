@@ -182,8 +182,8 @@
             <button onclick="genererBDSocial()" style="padding:10px 20px; border-radius:25px; background:linear-gradient(135deg,#ff0050,#ff4444); color:#fff; border:none; font-weight:700; cursor:pointer; font-size:0.9rem; white-space:nowrap;">🚀 Générer</button>
           </div>
           <div style="text-align:center; color:#aaa; font-size:0.9rem; margin:12px 0;">OU</div>
-          <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:12px;">
-            <button id="btnUploadImage" onclick="document.getElementById('socialImageUpload').click()" style="padding:12px 24px; border-radius:25px; background:linear-gradient(135deg,#ffd700,#ffed4e); border:2px solid #ffd700; color:#000; font-weight:700; cursor:pointer; font-size:0.95rem; white-space:nowrap; transition:all 0.3s ease; box-shadow:0 0 20px rgba(255,215,0,0.4); display:inline-block;">📸 Telecharger une image</button>
+          <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:12px; width:100%;">
+            <button id="btnUploadImage" onclick="document.getElementById('socialImageUpload').click()" style="padding:14px 28px; border-radius:25px; background:linear-gradient(135deg,#ffd700,#ffed4e); border:3px solid #ffd700; color:#000; font-weight:700; cursor:pointer; font-size:1rem; white-space:nowrap; transition:all 0.3s ease; box-shadow:0 0 25px rgba(255,215,0,0.5); flex:1; min-width:200px; text-transform:uppercase; letter-spacing:0.5px;" onmouseover="this.style.boxShadow='0 0 35px rgba(255,215,0,0.7)'; this.style.transform='scale(1.05)';" onmouseout="this.style.boxShadow='0 0 25px rgba(255,215,0,0.5)'; this.style.transform='scale(1)';">📸 Telecharger une image</button>
             <input type="file" accept="image/*" style="display:none" id="socialImageUpload" onchange="genererBDDepuisImage()" />
           </div>
           <div id="socialProfil" style="display:none; margin-top:12px; padding:10px; background:rgba(0,0,0,0.3); border-radius:10px; display:flex; align-items:center; gap:12px;">
