@@ -170,7 +170,8 @@
 
         <!-- Section Réseaux Sociaux -->
         <div style="max-width:600px; margin:0 auto 18px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); border-radius:16px; padding:16px;">
-          <p style="text-align:center; color:#ffd700; font-weight:700; font-size:0.95rem; margin-bottom:12px;">🎭 Créer une BD basée sur un profil réseau social</p>
+          <p style="text-align:center; color:#ffd700; font-weight:700; font-size:0.95rem; margin-bottom:16px;">🎭 Créer une BD basée sur un profil réseau social</p>
+          <button id="btnUploadImageTop" onclick="document.getElementById('socialImageUpload').click()" style="display:block; width:100%; padding:16px 20px; margin-bottom:16px; border-radius:25px; background:linear-gradient(135deg,#ffd700,#ffed4e); border:3px solid #ffd700; color:#000; font-weight:700; cursor:pointer; font-size:1.05rem; text-transform:uppercase; letter-spacing:0.5px; box-shadow:0 0 30px rgba(255,215,0,0.6); transition:all 0.3s ease;" onmouseover="this.style.boxShadow='0 0 40px rgba(255,215,0,0.8)'; this.style.transform='scale(1.02)';" onmouseout="this.style.boxShadow='0 0 30px rgba(255,215,0,0.6)'; this.style.transform='scale(1)';">📸 TELECHARGER UNE IMAGE</button>
           <div style="display:flex; gap:8px; justify-content:center; margin-bottom:12px; flex-wrap:wrap;">
             <button id="btnTikTok" onclick="setSocial('tiktok')" style="padding:8px 16px; border-radius:20px; border:2px solid #ff0050; background:#1a0010; color:#ff0050; font-weight:700; font-size:0.85rem; cursor:pointer;">🎵 TikTok</button>
             <button id="btnYouTube" onclick="setSocial('youtube')" style="padding:8px 16px; border-radius:20px; border:2px solid #ff4444; background:#1a0000; color:#ff4444; font-weight:700; font-size:0.85rem; cursor:pointer;">▶ YouTube</button>
@@ -182,10 +183,7 @@
             <button onclick="genererBDSocial()" style="padding:10px 20px; border-radius:25px; background:linear-gradient(135deg,#ff0050,#ff4444); color:#fff; border:none; font-weight:700; cursor:pointer; font-size:0.9rem; white-space:nowrap;">🚀 Générer</button>
           </div>
           <div style="text-align:center; color:#aaa; font-size:0.9rem; margin:12px 0;">OU</div>
-          <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:12px; width:100%;">
-            <button id="btnUploadImage" onclick="document.getElementById('socialImageUpload').click()" style="padding:14px 28px; border-radius:25px; background:linear-gradient(135deg,#ffd700,#ffed4e); border:3px solid #ffd700; color:#000; font-weight:700; cursor:pointer; font-size:1rem; white-space:nowrap; transition:all 0.3s ease; box-shadow:0 0 25px rgba(255,215,0,0.5); flex:1; min-width:200px; text-transform:uppercase; letter-spacing:0.5px;" onmouseover="this.style.boxShadow='0 0 35px rgba(255,215,0,0.7)'; this.style.transform='scale(1.05)';" onmouseout="this.style.boxShadow='0 0 25px rgba(255,215,0,0.5)'; this.style.transform='scale(1)';">📸 Telecharger une image</button>
-            <input type="file" accept="image/*" style="display:none" id="socialImageUpload" onchange="genererBDDepuisImage()" />
-          </div>
+          <input type="file" accept="image/*" style="display:none" id="socialImageUpload" onchange="genererBDDepuisImage()" />
           <div id="socialProfil" style="display:none; margin-top:12px; padding:10px; background:rgba(0,0,0,0.3); border-radius:10px; display:flex; align-items:center; gap:12px;">
             <img id="socialAvatar" src="" style="width:48px; height:48px; border-radius:50%; object-fit:cover; border:2px solid #ffd700;" />
             <div>
