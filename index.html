@@ -142,6 +142,11 @@
         <div id="qualityInfo" style="text-align:center; margin-bottom:14px; font-size:0.85rem; color:#aaa;">
           Style BD coloré — 1 couverture + 4 pages — à partir de 0,99 €
         </div>
+        <!-- Bouton de téléchargement d'image principal -->
+        <div style="text-align:center; margin-bottom:16px;">
+          <button onclick="document.getElementById('imgUploadMain').click()" style="padding:14px 32px; border-radius:30px; background:linear-gradient(135deg,#ff6b00,#ffd700); border:3px solid #ffd700; color:#000; font-weight:900; cursor:pointer; font-size:1.05rem; white-space:nowrap; transition:all 0.3s ease; box-shadow:0 0 30px rgba(255,215,0,0.6), inset 0 0 20px rgba(255,255,255,0.2); text-transform:uppercase; letter-spacing:1px;" onmouseover="this.style.boxShadow='0 0 40px rgba(255,215,0,0.8), inset 0 0 30px rgba(255,255,255,0.3)'; this.style.transform='scale(1.05)';" onmouseout="this.style.boxShadow='0 0 30px rgba(255,215,0,0.6), inset 0 0 20px rgba(255,255,255,0.2)'; this.style.transform='scale(1)';">📸 TELECHARGER UNE IMAGE</button>
+          <input type="file" accept="image/*" style="display:none" id="imgUploadMain" onchange="genererBDDepuisImageGenerique(this)" />
+        </div>
         <div class="create-form">
           <input type="text" class="create-input" id="videoPrompt" placeholder="Décris ton histoire...  (ex: Jacques et Linda, la thérapie par le rire)" />
           <div class="create-image-add" onclick="document.getElementById('imgUpload').click()" style="cursor:pointer; background:rgba(255,215,0,0.1); border:1px dashed #ffd700; padding:12px; border-radius:12px; display:flex; align-items:center; gap:10px; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,215,0,0.2)'" onmouseout="this.style.background='rgba(255,215,0,0.1)'">
