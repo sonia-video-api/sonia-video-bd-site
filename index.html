@@ -1736,25 +1736,53 @@
           imageUrls.push(imgUrl);
         }
 
-        // Afficher les images
+        // Afficher les images en grille 4x4 (4 pages x 4 cases)
         bdGeneratedUrls = imageUrls;
         document.getElementById('bdProgressBar').style.width = '100%';
-        document.getElementById('bdProgressText').textContent = `${pages.length} / ${pages.length} images générées`;
+        document.getElementById('bdProgressText').textContent = `${imageUrls.length} images générées`;
         document.getElementById('bdLoading').style.display = 'none';
         document.getElementById('bdImages').style.display = 'block';
 
         const container = document.getElementById('bdImagesContainer');
         container.innerHTML = '';
-        imageUrls.forEach((url, idx) => {
-          const label = idx === 0 ? 'Couverture' : `Page ${idx}`;
-          const div = document.createElement('div');
-          div.style.cssText = 'display:inline-block; margin:8px; text-align:center; vertical-align:top;';
-          div.innerHTML = `
-            <p style="color:#ffd700; font-size:0.8rem; margin-bottom:4px; font-weight:600;">${label}</p>
-            <img src="${url}" style="width:140px; border-radius:10px; border:2px solid rgba(255,215,0,0.3);" onerror="this.src='data:image/svg+xml,...'" />
+
+        // Afficher la couverture
+        if (imageUrls.length > 0) {
+          const coverDiv = document.createElement('div');
+          coverDiv.style.cssText = 'width:100%; margin-bottom:20px; text-align:center;';
+          coverDiv.innerHTML = `
+            <p style="color:#ffd700; font-size:1.1rem; margin-bottom:8px; font-weight:700;">📖 COUVERTURE</p>
+            <img src="${imageUrls[0]}" style="max-width:300px; width:100%; border-radius:10px; border:3px solid #ffd700; box-shadow:0 0 20px rgba(255,215,0,0.3);" />
           `;
-          container.appendChild(div);
-        });
+          container.appendChild(coverDiv);
+        }
+
+        // Afficher les 4 pages avec 4 cases chacune
+        let caseIndex = 1;
+        for (let pageNum = 1; pageNum <= 4; pageNum++) {
+          if (caseIndex >= imageUrls.length) break;
+
+          const pageDiv = document.createElement('div');
+          pageDiv.style.cssText = 'margin-bottom:30px;';
+          pageDiv.innerHTML = `<p style="color:#ffd700; font-size:1rem; margin-bottom:12px; font-weight:700;">📄 PAGE ${pageNum}</p>`;
+
+          const gridDiv = document.createElement('div');
+          gridDiv.style.cssText = 'display:grid; grid-template-columns:repeat(2,1fr); gap:12px; max-width:600px; margin:0 auto;';
+
+          for (let caseNum = 1; caseNum <= 4 && caseIndex < imageUrls.length; caseNum++) {
+            const caseDiv = document.createElement('div');
+            caseDiv.style.cssText = 'border:2px solid rgba(255,215,0,0.4); border-radius:8px; padding:8px; background:rgba(0,0,0,0.2);';
+            caseDiv.innerHTML = `
+              <img src="${imageUrls[caseIndex]}" style="width:100%; border-radius:6px; display:block; margin-bottom:6px;" />
+              <p style="color:#aaa; font-size:0.75rem; margin:0; text-align:center;">Case ${caseNum}</p>
+            `;
+            gridDiv.appendChild(caseDiv);
+            caseIndex++;
+          }
+
+          pageDiv.appendChild(gridDiv);
+          container.appendChild(pageDiv);
+        }
 
         // Sauvegarder dans l'historique
         sauvegarderHistorique({
@@ -1843,25 +1871,53 @@
           imageUrls.push(imgUrl);
         }
 
-        // Afficher les images
+        // Afficher les images en grille 4x4 (4 pages x 4 cases)
         bdGeneratedUrls = imageUrls;
         document.getElementById('bdProgressBar').style.width = '100%';
-        document.getElementById('bdProgressText').textContent = `${pages.length} / ${pages.length} images générées`;
+        document.getElementById('bdProgressText').textContent = `${imageUrls.length} images générées`;
         document.getElementById('bdLoading').style.display = 'none';
         document.getElementById('bdImages').style.display = 'block';
 
         const container = document.getElementById('bdImagesContainer');
         container.innerHTML = '';
-        imageUrls.forEach((url, idx) => {
-          const label = idx === 0 ? 'Couverture' : `Page ${idx}`;
-          const div = document.createElement('div');
-          div.style.cssText = 'display:inline-block; margin:8px; text-align:center; vertical-align:top;';
-          div.innerHTML = `
-            <p style="color:#ffd700; font-size:0.8rem; margin-bottom:4px; font-weight:600;">${label}</p>
-            <img src="${url}" style="width:140px; border-radius:10px; border:2px solid rgba(255,215,0,0.3);" onerror="this.src='data:image/svg+xml,...'" />
+
+        // Afficher la couverture
+        if (imageUrls.length > 0) {
+          const coverDiv = document.createElement('div');
+          coverDiv.style.cssText = 'width:100%; margin-bottom:20px; text-align:center;';
+          coverDiv.innerHTML = `
+            <p style="color:#ffd700; font-size:1.1rem; margin-bottom:8px; font-weight:700;">📖 COUVERTURE</p>
+            <img src="${imageUrls[0]}" style="max-width:300px; width:100%; border-radius:10px; border:3px solid #ffd700; box-shadow:0 0 20px rgba(255,215,0,0.3);" />
           `;
-          container.appendChild(div);
-        });
+          container.appendChild(coverDiv);
+        }
+
+        // Afficher les 4 pages avec 4 cases chacune
+        let caseIndex = 1;
+        for (let pageNum = 1; pageNum <= 4; pageNum++) {
+          if (caseIndex >= imageUrls.length) break;
+
+          const pageDiv = document.createElement('div');
+          pageDiv.style.cssText = 'margin-bottom:30px;';
+          pageDiv.innerHTML = `<p style="color:#ffd700; font-size:1rem; margin-bottom:12px; font-weight:700;">📄 PAGE ${pageNum}</p>`;
+
+          const gridDiv = document.createElement('div');
+          gridDiv.style.cssText = 'display:grid; grid-template-columns:repeat(2,1fr); gap:12px; max-width:600px; margin:0 auto;';
+
+          for (let caseNum = 1; caseNum <= 4 && caseIndex < imageUrls.length; caseNum++) {
+            const caseDiv = document.createElement('div');
+            caseDiv.style.cssText = 'border:2px solid rgba(255,215,0,0.4); border-radius:8px; padding:8px; background:rgba(0,0,0,0.2);';
+            caseDiv.innerHTML = `
+              <img src="${imageUrls[caseIndex]}" style="width:100%; border-radius:6px; display:block; margin-bottom:6px;" />
+              <p style="color:#aaa; font-size:0.75rem; margin:0; text-align:center;">Case ${caseNum}</p>
+            `;
+            gridDiv.appendChild(caseDiv);
+            caseIndex++;
+          }
+
+          pageDiv.appendChild(gridDiv);
+          container.appendChild(pageDiv);
+        }
 
         // Sauvegarder dans l'historique
         sauvegarderHistorique({
