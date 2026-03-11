@@ -239,6 +239,14 @@
                   <option value="onyx">👨 Onyx (Homme grave)</option>
                   <option value="fable">👨 Fable (Homme narrateur)</option>
                 </select>
+                <select id="musiqueVideoSelect" style="padding:8px 14px; border-radius:20px; border:2px solid #ff4444; background:#1a0000; color:#ff4444; font-size:0.85rem; cursor:pointer;">
+                  <option value="none">🔇 Pas de musique</option>
+                  <option value="epic">⚔️ Épique / Cinématique</option>
+                  <option value="happy">😊 Joyeuse / Upbeat</option>
+                  <option value="mystery">🕵️ Mystérieuse / Enquête</option>
+                  <option value="news">📰 Actualités / Sérieux</option>
+                  <option value="lofi">☕ Lofi / Détente</option>
+                </select>
               </div>
               <button id="btnGenererVideo" onclick="genererVideoComplete()" style="background:linear-gradient(135deg,#e63946,#c1121f); color:#fff; border:none; padding:14px 36px; border-radius:30px; font-size:1.05rem; font-weight:800; cursor:pointer; box-shadow:0 4px 20px rgba(230,57,70,0.5); letter-spacing:1px;">🎬 GÉNÉRER LA VIDÉO COMPLÈTE</button>
               <div id="videoGenLoading" style="display:none; margin-top:16px;">
@@ -1635,12 +1643,16 @@
       document.getElementById('bdProgressBar').style.width = '10%';
       document.getElementById('bdProgressText').textContent = 'Analyse de l\'image...';
 
-      try {
-        const res = await fetch(PROXY_URL + '/api/generer-bd-image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: imageBase64 })
-        });
+    try {
+      const res = await fetch(PROXY_URL + '/api/generer-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          histoire: histoireGeneree, 
+          voix: document.getElementById('voixVideoSelect').value,
+          musique: document.getElementById('musiqueVideoSelect').value
+        })
+      });
 
         if (!res.ok) {
           const err = await res.json();
